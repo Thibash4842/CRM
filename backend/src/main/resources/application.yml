@@ -3,9 +3,9 @@ spring:
     name: scratchio-crm
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/scratchio_crm
-    username: postgres
-    password: Thibash@4842
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/scratchio_crm}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:Thibash@4842}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -30,7 +30,7 @@ spring:
             enable: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /api
 
@@ -39,4 +39,4 @@ app:
     secret: ${JWT_SECRET:ScratchIO-CRM-Super-Secret-Key-2024-Enterprise-SaaS-Application-256bit}
     expiration-ms: 86400000
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:3000
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
