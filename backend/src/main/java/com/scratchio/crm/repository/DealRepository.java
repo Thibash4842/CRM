@@ -11,6 +11,7 @@ import java.util.List;
 
 @Repository
 public interface DealRepository extends JpaRepository<Deal, Long> {
+    List<Deal> findByLeadId(Long leadId);
     List<Deal> findByStage(DealStage stage);
     List<Deal> findByAssignedToId(Long userId);
     List<Deal> findByClientId(Long clientId);

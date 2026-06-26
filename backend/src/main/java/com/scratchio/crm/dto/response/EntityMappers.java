@@ -326,4 +326,44 @@ public class EntityMappers {
                     .build();
         }
     }
+
+    @Data @Builder
+    public static class CalendarEventResponse {
+        private Long id;
+        private String title;
+        private String description;
+        private EventType eventType;
+        private LocalDateTime startTime;
+        private LocalDateTime endTime;
+        private boolean isAllDay;
+        private Long ownerId;
+        private String ownerName;
+        private String location;
+        private String meetingUrl;
+        private EventStatus status;
+        private Long contactId;
+        private String contactName;
+        private Long dealId;
+        private String dealTitle;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public static CalendarEventResponse from(CalendarEvent e) {
+            if (e == null) return null;
+            return CalendarEventResponse.builder()
+                    .id(e.getId()).title(e.getTitle()).description(e.getDescription())
+                    .eventType(e.getEventType()).startTime(e.getStartTime())
+                    .endTime(e.getEndTime()).isAllDay(e.isAllDay())
+                    .ownerId(e.getOwner() != null ? e.getOwner().getId() : null)
+                    .ownerName(e.getOwner() != null ? e.getOwner().getFullName() : null)
+                    .location(e.getLocation()).meetingUrl(e.getMeetingUrl())
+                    .status(e.getStatus())
+                    .contactId(e.getContact() != null ? e.getContact().getId() : null)
+                    .contactName(e.getContact() != null ? e.getContact().getFullName() : null)
+                    .dealId(e.getDeal() != null ? e.getDeal().getId() : null)
+                    .dealTitle(e.getDeal() != null ? e.getDeal().getTitle() : null)
+                    .createdAt(e.getCreatedAt()).updatedAt(e.getUpdatedAt())
+                    .build();
+        }
+    }
 }

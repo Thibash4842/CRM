@@ -1,5 +1,5 @@
 import { Mail, Phone, MapPin, Building2, Globe, Calendar, Clock, Edit, MoreHorizontal, Video, MessageCircle, Briefcase, Activity, FileText, CheckSquare } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Drawer from '../ui/Drawer';
 import ContactTimeline from '../contacts/ContactTimeline';
@@ -42,9 +42,15 @@ const MOCK_TASKS = [
   { id: 2, title: 'Schedule demo with tech team', due: 'Thu, 22 Jun', priority: 'medium', done: false },
 ];
 
-export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onConvert }) {
-  const [activeTab, setActiveTab] = useState('overview');
+export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onConvert, initialTab = 'overview' }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab, lead?.id]);
 
   if (!lead) return null;
 

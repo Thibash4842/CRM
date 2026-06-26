@@ -1,13 +1,17 @@
 package com.scratchio.crm.service;
 
 import com.scratchio.crm.dto.response.EntityMappers.LeadResponse;
+import com.scratchio.crm.entity.Client;
 import com.scratchio.crm.entity.Lead;
 import com.scratchio.crm.entity.User;
 import com.scratchio.crm.entity.enums.ActivityType;
 import com.scratchio.crm.entity.enums.LeadStatus;
 import com.scratchio.crm.entity.enums.LeadPriority;
 import com.scratchio.crm.exception.ResourceNotFoundException;
+import com.scratchio.crm.repository.ClientRepository;
+import com.scratchio.crm.repository.DealRepository;
 import com.scratchio.crm.repository.LeadRepository;
+import com.scratchio.crm.repository.TaskRepository;
 import com.scratchio.crm.repository.UserRepository;
 import com.scratchio.crm.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,9 @@ public class LeadService {
     private final ActivityService activityService;
     private final CustomUserDetailsService userDetailsService;
     private final ClientService clientService;
+    private final ClientRepository clientRepository;
+    private final DealRepository dealRepository;
+    private final TaskRepository taskRepository;
 
     public List<LeadResponse> getAll(String search, LeadStatus status, String source) {
         Specification<Lead> spec = (root, query, cb) -> cb.isFalse(root.get("isDeleted"));
@@ -162,6 +169,20 @@ public class LeadService {
     @Transactional
     public void delete(Long id) {
         Lead lead = findLead(id);
+        // Nullify all FK references pointing to this lead before deleting
+        // to avoid foreign key constraint violations
+        clientRepository.findByLeadId(id).ifPresent(client -> {
+            client.setLead(null);
+            clientRepository.save(client);
+        });
+        dealRepository.findByLeadId(id).forEach(deal -> {
+            deal.setLead(null);
+            dealRepository.save(deal);
+        });
+        taskRepository.findByLeadId(id).forEach(task -> {
+            task.setLead(null);
+            taskRepository.save(task);
+        });
         leadRepository.delete(lead);
         activityService.log("LEAD", id, ActivityType.DELETED, "Lead deleted", lead.getFullName());
     }

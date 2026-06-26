@@ -145,14 +145,22 @@ export default function ContactProfile({ contact, onEdit }) {
         <div className="px-6 pb-4">
           <div className="grid grid-cols-4 gap-2">
             {[
-              { icon: Phone, label: 'Call', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30' },
-              { icon: Mail, label: 'Email', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30' },
-              { icon: Video, label: 'Meet', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30' },
-              { icon: MessageCircle, label: 'WhatsApp', color: 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30' },
+              { icon: Phone, label: 'Call', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30', action: 'tel', tab: 'calls' },
+              { icon: Mail, label: 'Email', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30', action: 'mailto', tab: 'emails' },
+              { icon: Video, label: 'Meet', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30', tab: 'meetings' },
+              { icon: MessageCircle, label: 'WhatsApp', color: 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30', action: 'whatsapp' },
             ].map(action => {
               const Icon = action.icon;
               return (
-                <button key={action.label} className={`flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium transition-all ${action.color}`}>
+                <button 
+                  key={action.label} 
+                  onClick={() => {
+                    if (action.action === 'tel' && contact?.phone) window.location.href = `tel:${contact.phone}`;
+                    else if (action.action === 'mailto' && contact?.email) window.location.href = `mailto:${contact.email}`;
+                    else if (action.action === 'whatsapp' && contact?.phone) window.open(`https://wa.me/${contact.phone.replace(/[^+\d]/g, '')}`, '_blank');
+                    else if (action.tab) setActiveTab(action.tab);
+                  }}
+                  className={`flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium transition-all ${action.color}`}>
                   <Icon className="w-4 h-4" />
                   {action.label}
                 </button>
@@ -189,7 +197,7 @@ export default function ContactProfile({ contact, onEdit }) {
       {/* ═══ Tab Content ═══ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
-          {activeTab === 'overview' && <OverviewTab contact={contact} />}
+          {activeTab === 'overview' && <OverviewTab contact={contact} setActiveTab={setActiveTab} />}
           {activeTab === 'timeline' && <ContactTimeline />}
           {activeTab === 'emails' && <EmailsTab />}
           {activeTab === 'calls' && <CallsTab />}
@@ -207,7 +215,7 @@ export default function ContactProfile({ contact, onEdit }) {
 /* ═══════════════════════════════════════ */
 /*  OVERVIEW TAB                          */
 /* ═══════════════════════════════════════ */
-function OverviewTab({ contact }) {
+function OverviewTab({ contact, setActiveTab }) {
   const score = contact.leadScore || 75;
 
   return (
@@ -237,7 +245,12 @@ function OverviewTab({ contact }) {
             </div>
           </div>
           <div className="bg-white/70 dark:bg-slate-900/60 rounded-lg p-3 backdrop-blur-sm flex flex-col justify-center">
-            <button className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm transition-colors">
+            <button 
+              onClick={() => {
+                if (contact?.phone) window.location.href = `tel:${contact.phone}`;
+                else setActiveTab('calls');
+              }}
+              className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm transition-colors">
               Call Today
             </button>
           </div>

@@ -22,6 +22,7 @@ import Reports from './pages/Reports';
 import UsersPage from './pages/Users';
 import SettingsPage from './pages/Settings';
 import Notifications from './pages/Notifications';
+import Calendar from './pages/Calendar';
 import { LoadingSpinner } from './components/ui/PageHeader';
 
 function PrivateRoute({ children }) {
@@ -65,6 +66,7 @@ export default function App() {
                 <Route path="notes" element={<Notes />} />
                 <Route path="clients" element={<Clients />} />
                 <Route path="projects" element={<Projects />} />
+                <Route path="calendar" element={<Calendar />} />
                 <Route path="invoices" element={<Invoices />} />
                 <Route path="payments" element={<Payments />} />
                 <Route path="reports" element={<Reports />} />

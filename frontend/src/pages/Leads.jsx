@@ -37,6 +37,7 @@ export default function Leads({ type = 'active' }) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState('overview');
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'kanban'
   const [ownerFilter, setOwnerFilter] = useState('');
@@ -178,12 +179,25 @@ export default function Leads({ type = 'active' }) {
     }
   };
 
-  const openDrawer = (lead) => { setSelectedLead(lead); setDrawerOpen(true); };
+  const openDrawer = (lead, tab = 'overview') => { 
+    setSelectedLead(lead); 
+    setDrawerTab(tab);
+    setDrawerOpen(true); 
+  };
   const closeDrawer = () => { setSelectedLead(null); setDrawerOpen(false); };
 
   const handleQuickAction = (type, lead) => {
-    // For now just show a toast/alert. Integrate with real flows later.
-    alert(`${type} action for ${lead.fullName || lead.firstName}`);
+    if (type === 'call') {
+      if (lead.phone) window.location.href = `tel:${lead.phone}`;
+      else openDrawer(lead, 'activities');
+    } else if (type === 'email') {
+      if (lead.email) window.location.href = `mailto:${lead.email}`;
+      else openDrawer(lead, 'activities');
+    } else if (type === 'meeting') {
+      openDrawer(lead, 'activities');
+    } else if (type === 'note') {
+      openDrawer(lead, 'notes');
+    }
   };
 
   const filteredLeads = useMemo(() => {
@@ -426,8 +440,9 @@ export default function Leads({ type = 'active' }) {
         isOpen={drawerOpen}
         onClose={closeDrawer}
         lead={selectedLead}
-        onUpdate={handleUpdateLead}
+        onUpdate={(data) => handleUpdateLead(selectedLead.id, data)}
         onConvert={(lead) => openConversionModal(lead)}
+        initialTab={drawerTab}
       />
 
       <LeadConversionModal
@@ -470,22 +485,20 @@ export default function Leads({ type = 'active' }) {
         {bookedDetailsLead && (
           <div className="space-y-6">
             <div className="flex items-center gap-3.5 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${
-                bookedDetailsLead.status === 'WON'
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${bookedDetailsLead.status === 'WON'
                   ? 'bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400'
                   : 'bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400'
-              }`}>
+                }`}>
                 {bookedDetailsLead.status === 'WON' ? <CheckCircle className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {bookedDetailsLead.fullName || `${bookedDetailsLead.firstName} ${bookedDetailsLead.lastName}`}
                 </h3>
-                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full text-xs font-semibold ${
-                  bookedDetailsLead.status === 'WON'
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full text-xs font-semibold ${bookedDetailsLead.status === 'WON'
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                }`}>
+                  }`}>
                   {bookedDetailsLead.status === 'WON' ? 'BOOKED' : 'LOST'}
                 </span>
               </div>
@@ -498,11 +511,10 @@ export default function Leads({ type = 'active' }) {
                   <select
                     value={bookedDetailsLead.status === 'WON' ? 'WON' : 'LOST'}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className={`w-full border rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none transition-all cursor-pointer ${
-                      bookedDetailsLead.status === 'WON'
+                    className={`w-full border rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none transition-all cursor-pointer ${bookedDetailsLead.status === 'WON'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400'
                         : 'bg-red-50 border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-800 dark:text-red-400'
-                    }`}
+                      }`}
                   >
                     <option value="WON" className="bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 font-semibold">Booked</option>
                     <option value="LOST" className="bg-white dark:bg-slate-800 text-red-700 dark:text-red-400 font-semibold">Lost</option>

@@ -53,9 +53,21 @@ export default function Trash() {
     return [{ value: '', label: 'All Reasons' }, ...Array.from(r).map(reason => ({ value: reason, label: reason }))];
   }, [leads]);
 
+  const getDisplayName = (lead) => {
+    if (lead.fullName?.trim()) return lead.fullName.trim();
+    const first = lead.firstName?.trim() || '';
+    const last = lead.lastName?.trim() || '';
+    const combined = `${first} ${last}`.trim();
+    return combined || 'Unknown Lead';
+  };
+
   const filteredLeads = useMemo(() => {
     return leads.filter((l) => {
-      if (search && !l.fullName?.toLowerCase().includes(search.toLowerCase()) && !l.company?.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search) {
+        const term = search.toLowerCase();
+        const name = getDisplayName(l).toLowerCase();
+        if (!name.includes(term) && !l.company?.toLowerCase().includes(term) && !l.email?.toLowerCase().includes(term)) return false;
+      }
       if (reasonFilter && l.lossReason !== reasonFilter) return false;
       return true;
     });
@@ -83,13 +95,18 @@ export default function Trash() {
             <div key={lead.id} className="glass-card p-4 rounded-2xl w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-slate-500 shadow-slate-500/10 transition-all">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-semibold text-lg">
-                  {(lead.firstName?.[0] || '') + (lead.lastName?.[0] || '')}
+                  {(() => {
+                    const name = getDisplayName(lead);
+                    return name === 'Unknown Lead' ? '?' : (lead.firstName?.[0] || lead.fullName?.[0] || name[0] || '?').toUpperCase();
+                  })()}
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-semibold text-slate-700 dark:text-slate-300 truncate line-through">{lead.fullName || `${lead.firstName} ${lead.lastName}`}</h4>
-                  <p className="text-sm text-slate-500 truncate">{lead.company} · {lead.email}</p>
+                  <h4 className="font-semibold text-slate-700 dark:text-slate-300 truncate line-through">{getDisplayName(lead)}</h4>
+                  <p className="text-sm text-slate-500 truncate">
+                    {[lead.company, lead.email].filter(Boolean).join(' · ') || <span className="italic">No contact info</span>}
+                  </p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-red-500">
-                    <span className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Lost: {lead.lossReason}</span>
+                    <span className="flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Lost: {lead.lossReason || 'Unknown'}</span>
                     <span className="text-slate-500">Deleted on {formatDateTime(lead.deletedAt)} by {lead.deletedByName}</span>
                   </div>
                 </div>

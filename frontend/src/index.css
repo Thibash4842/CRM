@@ -58,62 +58,110 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-300 dark:bg-slate-600 rounded-full;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-12px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
+
 .animate-slide-in {
   animation: slideIn 0.3s ease-out forwards;
 }
 
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
+
 .animate-slide-in-right {
   animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-slide-up {
   animation: slideUp 0.35s ease-out forwards;
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+  }
 }
+
 .animate-pulse-glow {
   animation: pulseGlow 2s ease-in-out infinite;
 }
 
 @keyframes progressStripe {
-  0% { background-position: 1rem 0; }
-  100% { background-position: 0 0; }
+  0% {
+    background-position: 1rem 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
 }
 
 .drag-drop-zone {
   @apply relative border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-10 text-center transition-all duration-300 cursor-pointer;
 }
+
 .drag-drop-zone:hover,
 .drag-drop-zone.dragging {
   @apply border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20;
@@ -122,39 +170,150 @@
 .step-dot {
   @apply w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shrink-0;
 }
+
 .step-dot.active {
   @apply bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/30;
   animation: pulseGlow 2s ease-in-out infinite;
 }
+
 .step-dot.completed {
   @apply bg-emerald-500 text-white;
 }
+
 .step-dot.pending {
   @apply bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400;
 }
+
 .step-connector {
   @apply h-0.5 flex-1 mx-1 rounded-full transition-colors duration-300;
 }
 
 .ops-progress-bar {
   background-size: 1rem 1rem;
-  background-image: linear-gradient(
-    45deg,
-    rgba(255,255,255,.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255,255,255,.15) 50%,
-    rgba(255,255,255,.15) 75%,
-    transparent 75%,
-    transparent
-  );
+  background-image: linear-gradient(45deg,
+      rgba(255, 255, 255, .15) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, .15) 50%,
+      rgba(255, 255, 255, .15) 75%,
+      transparent 75%,
+      transparent);
   animation: progressStripe 0.5s linear infinite;
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(-12px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
+
 .animate-toast-in {
   animation: toastIn 0.3s ease-out forwards;
+}
+
+/* FullCalendar Overrides */
+.fc {
+  --fc-border-color: #f1f5f9;
+  --fc-button-text-color: #475569;
+  --fc-button-bg-color: transparent;
+  --fc-button-border-color: #e2e8f0;
+  --fc-button-hover-bg-color: #f8fafc;
+  --fc-button-hover-border-color: #cbd5e1;
+  --fc-button-active-bg-color: #f1f5f9;
+  --fc-button-active-border-color: #cbd5e1;
+  --fc-today-bg-color: #f8fafc;
+  --fc-neutral-bg-color: transparent;
+  --fc-list-event-hover-bg-color: #f8fafc;
+  --fc-theme-standard-border-color: #f1f5f9;
+  --fc-now-indicator-color: #6366f1;
+}
+
+.dark .fc {
+  --fc-border-color: #1e293b;
+  --fc-button-text-color: #94a3b8;
+  --fc-button-bg-color: transparent;
+  --fc-button-border-color: #334155;
+  --fc-button-hover-bg-color: #1e293b;
+  --fc-button-hover-border-color: #475569;
+  --fc-button-active-bg-color: #334155;
+  --fc-button-active-border-color: #475569;
+  --fc-today-bg-color: #0f172a;
+  --fc-neutral-bg-color: transparent;
+  --fc-theme-standard-border-color: #1e293b;
+}
+
+.fc-toolbar-title {
+  @apply text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight;
+}
+
+/* Premium Header Buttons */
+.fc .fc-button {
+  @apply font-medium text-sm rounded-lg px-4 py-2 transition-all duration-200 capitalize shadow-sm;
+}
+.fc .fc-button-primary {
+  @apply bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  @apply bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white shadow-inner;
+}
+
+.fc-button-group {
+  @apply p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50 flex gap-1;
+}
+.fc-button-group > .fc-button {
+  @apply rounded-lg border-transparent bg-transparent shadow-none hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm;
+}
+.fc-button-group > .fc-button.fc-button-active {
+  @apply bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400 font-semibold border-transparent;
+}
+
+.fc-col-header-cell-cushion {
+  @apply py-4 font-semibold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-widest;
+}
+
+.fc-daygrid-day-number {
+  @apply p-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  @apply border-slate-100 dark:border-slate-800/50;
+}
+
+.fc-event {
+  @apply rounded-lg shadow-sm border-0 font-medium px-2 py-0.5 overflow-hidden transition-all duration-300 cursor-pointer text-xs leading-relaxed;
+}
+
+.fc-event:hover {
+  @apply shadow-md z-10 scale-[1.01] brightness-105;
+}
+
+.fc-v-event {
+  @apply border-l-4 rounded-r-lg shadow-sm;
+}
+.fc-v-event .fc-event-main {
+  @apply font-medium text-white p-1;
+}
+
+.fc-timegrid-slot-label-cushion {
+  @apply text-xs font-medium text-slate-400 dark:text-slate-500 pr-4;
+}
+
+.fc-now-indicator-arrow {
+  @apply border-indigo-500;
+}
+.fc-now-indicator-line {
+  @apply border-indigo-500 border-t-2 opacity-50;
+}
+
+* {
+  button {
+    cursor: pointer;
+  }
 }
