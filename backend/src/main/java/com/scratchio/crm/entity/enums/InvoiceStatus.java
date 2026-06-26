@@ -1,0 +1,8 @@
+package com.scratchio.crm.entity.enums;
+
+public enum InvoiceStatus {
+    DRAFT,
+    SENT,
+    PAID,
+    OVERDUE
+}

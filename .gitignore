@@ -1,0 +1,25 @@
+# Backend
+backend/target/
+backend/.idea/
+backend/*.iml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env — NEVER commit these!
+.env
+.env.local
+.env.production
+backend/.env
+frontend/.env.local
+*.log
