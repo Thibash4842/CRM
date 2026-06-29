@@ -32,8 +32,9 @@ public class NotificationService {
     private final DealRepository dealRepository;
 
     public Page<NotificationResponse> getNotifications(Long userId, String search, String type, Boolean isRead, String dateRange, String priority, Pageable pageable) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found");
+        }
 
         Specification<Notification> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

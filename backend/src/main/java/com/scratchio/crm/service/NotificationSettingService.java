@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class NotificationSettingService {
 
     private final NotificationSettingRepository settingRepository;
@@ -23,7 +24,6 @@ public class NotificationSettingService {
         return toDto(setting);
     }
 
-    @SuppressWarnings("null")
     @Transactional
     public NotificationSettingDTO updateSettings(Long userId, NotificationSettingDTO dto) {
         NotificationSetting setting = settingRepository.findByUser_Id(userId)
