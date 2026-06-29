@@ -37,7 +37,7 @@ public class NotificationService {
 
         Specification<Notification> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("recipientUser"), user));
+            predicates.add(cb.equal(root.get("recipientUser").get("id"), userId));
 
             if (search != null && !search.trim().isEmpty()) {
                 String q = "%" + search.toLowerCase() + "%";

@@ -86,6 +86,7 @@ export default function Notifications() {
         priority: priorityFilter !== 'all' ? priorityFilter.toUpperCase() : null,
       };
       const response = await notificationsApi.getAll(params);
+      console.log('Notifications API response:', response);
       const newItems = response?.content || [];
       setNotifications(prev => isInitial ? newItems : [...prev, ...newItems]);
       setHasMore(newItems.length === 20 && !response.last);
