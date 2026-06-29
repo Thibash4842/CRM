@@ -43,6 +43,7 @@ public class User {
     private String avatarUrl;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "reset_token")

@@ -5,7 +5,6 @@ import com.scratchio.crm.entity.*;
 import com.scratchio.crm.entity.enums.*;
 import com.scratchio.crm.exception.ResourceNotFoundException;
 import com.scratchio.crm.repository.*;
-import com.scratchio.crm.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
@@ -26,7 +26,6 @@ public class NotificationService {
     private final LeadRepository leadRepository;
     private final TaskRepository taskRepository;
     private final DealRepository dealRepository;
-    private final CustomUserDetailsService userDetailsService;
 
     public List<NotificationResponse> getNotifications(Long userId, String search, String type, Boolean isRead, String dateRange, String sort) {
         // Ensure user exists
@@ -86,7 +85,6 @@ public class NotificationService {
                 })
                 .filter(n -> {
                     if (dateRange != null && !dateRange.trim().isEmpty() && !dateRange.equalsIgnoreCase("all")) {
-                        LocalDateTime now = LocalDateTime.now();
                         LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
                         LocalDateTime yesterdayStart = todayStart.minusDays(1);
                         LocalDateTime weekStart = todayStart.minusDays(7);

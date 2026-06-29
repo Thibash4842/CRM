@@ -1,7 +1,6 @@
 package com.scratchio.crm.service;
 
 import com.scratchio.crm.dto.response.EntityMappers.LeadResponse;
-import com.scratchio.crm.entity.Client;
 import com.scratchio.crm.entity.Lead;
 import com.scratchio.crm.entity.User;
 import com.scratchio.crm.entity.enums.ActivityType;
@@ -25,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class LeadService {
 
     private final LeadRepository leadRepository;

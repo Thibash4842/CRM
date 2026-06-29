@@ -30,6 +30,7 @@ public class CalendarEvent {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false)
+    @Builder.Default
     private EventType eventType = EventType.MEETING;
 
     @Column(name = "start_time", nullable = false)
@@ -39,6 +40,7 @@ public class CalendarEvent {
     private LocalDateTime endTime;
 
     @Column(name = "is_all_day")
+    @Builder.Default
     private boolean isAllDay = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,6 +54,7 @@ public class CalendarEvent {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private EventStatus status = EventStatus.SCHEDULED;
 
     // Optional CRM Links for V1

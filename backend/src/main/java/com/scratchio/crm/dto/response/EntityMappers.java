@@ -202,6 +202,7 @@ public class EntityMappers {
         private java.util.List<String> teamMemberNames;
         private LocalDateTime createdAt;
 
+        @SuppressWarnings("null")
         public static ProjectResponse from(Project p) {
             if (p == null) return null;
             return ProjectResponse.builder()

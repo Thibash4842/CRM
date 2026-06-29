@@ -18,7 +18,6 @@ public class ReportService {
     private final DealRepository dealRepository;
     private final LeadRepository leadRepository;
     private final ProjectRepository projectRepository;
-    private final PaymentRepository paymentRepository;
 
     public Map<String, Object> revenueReport() {
         Map<String, Object> report = new HashMap<>();

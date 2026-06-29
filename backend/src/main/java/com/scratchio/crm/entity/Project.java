@@ -32,9 +32,11 @@ public class Project {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private ProjectStatus status = ProjectStatus.PLANNING;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer progress = 0;
 
     @Column(name = "start_date")

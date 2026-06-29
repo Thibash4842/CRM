@@ -30,10 +30,12 @@ public class Deal {
     private String description;
 
     @Column(nullable = false, precision = 15, scale = 2)
+    @Builder.Default
     private BigDecimal value = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private DealStage stage = DealStage.QUALIFICATION;
 
     @Column(name = "expected_close_date")

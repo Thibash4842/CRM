@@ -40,6 +40,7 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     @Bean
+    @SuppressWarnings("null")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)

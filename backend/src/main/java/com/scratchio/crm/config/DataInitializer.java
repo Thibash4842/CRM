@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @SuppressWarnings("null")
     public void run(String... args) {
         if (userRepository.count() > 0) return;
 
@@ -96,7 +97,7 @@ public class DataInitializer implements CommandLineRunner {
                 .endDate(LocalDate.now().plusDays(60))
                 .client(client).deal(deal1).manager(manager).createdBy(admin).build());
 
-        Invoice invoice = invoiceRepository.save(Invoice.builder()
+        invoiceRepository.save(Invoice.builder()
                 .invoiceNumber("INV-2024-001")
                 .client(client).project(project)
                 .amount(new BigDecimal("22500")).taxAmount(new BigDecimal("2250"))

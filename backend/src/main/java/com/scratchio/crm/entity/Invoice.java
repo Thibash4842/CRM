@@ -38,6 +38,7 @@ public class Invoice {
     private BigDecimal amount;
 
     @Column(name = "tax_amount", precision = 15, scale = 2)
+    @Builder.Default
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
     @Column(name = "total_amount", nullable = false, precision = 15, scale = 2)
@@ -48,6 +49,7 @@ public class Invoice {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private InvoiceStatus status = InvoiceStatus.DRAFT;
 
     @Column(columnDefinition = "TEXT")

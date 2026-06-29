@@ -33,10 +33,12 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private TaskPriority priority = TaskPriority.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private TaskStatus status = TaskStatus.PENDING;
 
     @Column(name = "reminder_at")

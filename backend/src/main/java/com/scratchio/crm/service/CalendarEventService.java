@@ -11,7 +11,6 @@ import com.scratchio.crm.exception.ResourceNotFoundException;
 import com.scratchio.crm.repository.CalendarEventRepository;
 import com.scratchio.crm.repository.DealRepository;
 import com.scratchio.crm.repository.LeadRepository;
-import com.scratchio.crm.repository.UserRepository;
 import com.scratchio.crm.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,13 +23,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class CalendarEventService {
 
     private final CalendarEventRepository calendarEventRepository;
     private final CustomUserDetailsService userDetailsService;
     private final LeadRepository leadRepository;
     private final DealRepository dealRepository;
-    private final UserRepository userRepository;
 
     public List<CalendarEventResponse> getEventsBetween(LocalDateTime start, LocalDateTime end, Boolean ownOnly) {
         if (Boolean.TRUE.equals(ownOnly)) {
