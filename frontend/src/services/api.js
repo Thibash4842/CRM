@@ -174,14 +174,16 @@ export const notificationsApi = {
     const query = new URLSearchParams(filterParams).toString();
     return api.get(`/notifications${query ? `?${query}` : ''}`);
   },
-  getStats: () => api.get('/notifications/stats'),
-  markRead: (id) => api.put(`/notifications/${id}/read`),
-  markUnread: (id) => api.put(`/notifications/${id}/unread`),
-  archive: (id) => api.put(`/notifications/${id}/archive`),
+  getUnread: () => api.get('/notifications/unread'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
   delete: (id) => api.delete(`/notifications/${id}`),
-  markAllRead: () => api.post('/notifications/mark-all-read'),
-  archiveAll: () => api.post('/notifications/archive-all'),
-  deleteAll: () => api.post('/notifications/delete-all'),
-  getAiSuggestions: () => api.get('/notifications/ai-suggestions'),
-  createMockNotification: (type) => api.post(`/notifications/mock${type ? `?type=${type}` : ''}`),
+  clearAllRead: () => api.delete('/notifications/read-all'),
+  getStats: () => api.get('/notifications/stats'),
+};
+
+export const notificationSettingsApi = {
+  get: () => api.get('/notification-settings'),
+  update: (data) => api.put('/notification-settings', data),
 };

@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -28,15 +32,68 @@ public class NotificationController {
         return currentUser.getId();
     }
 
+    // --- User Requested Endpoints ---
+
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications(
+    public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Boolean isRead,
             @RequestParam(required = false) String dateRange,
-            @RequestParam(required = false) String sort) {
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         Long userId = getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.ok(notificationService.getNotifications(userId, search, type, isRead, dateRange, sort)));
+        
+        org.springframework.data.domain.Sort.Direction direction = org.springframework.data.domain.Sort.Direction.DESC;
+        if (sort != null && sort.equalsIgnoreCase("oldest")) {
+            direction = org.springframework.data.domain.Sort.Direction.ASC;
+        }
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(direction, "createdAt"));
+        
+        return ResponseEntity.ok(ApiResponse.ok(notificationService.getNotifications(userId, search, type, isRead, dateRange, priority, pageable)));
+    }
+
+    @GetMapping("/unread")
+    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getUnreadNotifications() {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(notificationService.getUnreadNotifications(userId)));
+    }
+
+    @GetMapping("/unread-count")
+    public ResponseEntity<ApiResponse<Long>> getUnreadCount() {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(notificationService.getUnreadCount(userId)));
+    }
+
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(@PathVariable Long id) {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.ok(notificationService.markAsRead(id, userId)));
+    }
+
+    @PatchMapping("/read-all")
+    public ResponseEntity<ApiResponse<Void>> markAllAsRead() {
+        Long userId = getCurrentUserId();
+        notificationService.markAllAsRead(userId);
+        return ResponseEntity.ok(ApiResponse.ok("All notifications marked as read", null));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotification(@PathVariable Long id) {
+        Long userId = getCurrentUserId();
+        notificationService.deleteNotification(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok("Notification deleted successfully", null));
+    }
+
+    // --- Legacy / Internal Endpoints ---
+
+    @DeleteMapping("/read-all")
+    public ResponseEntity<ApiResponse<Void>> deleteReadNotifications() {
+        Long userId = getCurrentUserId();
+        notificationService.deleteReadNotifications(userId);
+        return ResponseEntity.ok(ApiResponse.ok("Read notifications deleted successfully", null));
     }
 
     @GetMapping("/stats")
@@ -45,43 +102,10 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.ok(notificationService.getNotificationStats(userId)));
     }
 
-    @PutMapping("/{id}/read")
-    public ResponseEntity<ApiResponse<NotificationResponse>> markRead(@PathVariable Long id) {
-        Long userId = getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.ok(notificationService.markRead(id, userId)));
-    }
-
     @PutMapping("/{id}/unread")
     public ResponseEntity<ApiResponse<NotificationResponse>> markUnread(@PathVariable Long id) {
         Long userId = getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.ok(notificationService.markUnread(id, userId)));
-    }
-
-    @PutMapping("/{id}/archive")
-    public ResponseEntity<ApiResponse<NotificationResponse>> archive(@PathVariable Long id) {
-        Long userId = getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.ok(notificationService.archive(id, userId)));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
-        Long userId = getCurrentUserId();
-        notificationService.delete(id, userId);
-        return ResponseEntity.ok(ApiResponse.ok("Notification deleted successfully", null));
-    }
-
-    @PostMapping("/mark-all-read")
-    public ResponseEntity<ApiResponse<Void>> markAllRead() {
-        Long userId = getCurrentUserId();
-        notificationService.markAllRead(userId);
-        return ResponseEntity.ok(ApiResponse.ok("All notifications marked as read", null));
-    }
-
-    @PostMapping("/archive-all")
-    public ResponseEntity<ApiResponse<Void>> archiveAll() {
-        Long userId = getCurrentUserId();
-        notificationService.archiveAll(userId);
-        return ResponseEntity.ok(ApiResponse.ok("All notifications archived", null));
     }
 
     @PostMapping("/delete-all")
@@ -95,12 +119,5 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAiSuggestions() {
         Long userId = getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.ok(notificationService.getAiSuggestions(userId)));
-    }
-
-    @PostMapping("/mock")
-    public ResponseEntity<ApiResponse<NotificationResponse>> createMockNotification(
-            @RequestParam(required = false) String type) {
-        Long userId = getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.ok(notificationService.createMockNotification(userId, type)));
     }
 }

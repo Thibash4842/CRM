@@ -301,29 +301,33 @@ public class EntityMappers {
         private Long id;
         private Long recipientId;
         private String title;
-        private String description;
-        private NotificationType type;
+        private String message;
+        private NotificationType notificationType;
         private NotificationPriority priority;
-        private String relatedRecordName;
-        private String relatedRecordLink;
+        private RelatedEntityType relatedEntityType;
+        private Long relatedEntityId;
+        private String actionUrl;
         private Boolean isRead;
-        private Boolean isArchived;
         private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+        private Long createdById;
 
         public static NotificationResponse from(Notification n) {
             if (n == null) return null;
             return NotificationResponse.builder()
                     .id(n.getId())
-                    .recipientId(n.getRecipient() != null ? n.getRecipient().getId() : null)
+                    .recipientId(n.getRecipientUser() != null ? n.getRecipientUser().getId() : null)
                     .title(n.getTitle())
-                    .description(n.getDescription())
-                    .type(n.getType())
+                    .message(n.getMessage())
+                    .notificationType(n.getNotificationType())
                     .priority(n.getPriority())
-                    .relatedRecordName(n.getRelatedRecordName())
-                    .relatedRecordLink(n.getRelatedRecordLink())
+                    .relatedEntityType(n.getRelatedEntityType())
+                    .relatedEntityId(n.getRelatedEntityId())
+                    .actionUrl(n.getActionUrl())
                     .isRead(n.getIsRead())
-                    .isArchived(n.getIsArchived())
                     .createdAt(n.getCreatedAt())
+                    .updatedAt(n.getUpdatedAt())
+                    .createdById(n.getCreatedBy() != null ? n.getCreatedBy().getId() : null)
                     .build();
         }
     }

@@ -16,7 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.scheduling.annotation.Scheduled;
+
 import java.time.LocalDateTime;
+import com.scratchio.crm.entity.enums.NotificationType;
+import com.scratchio.crm.entity.enums.NotificationPriority;
+import com.scratchio.crm.entity.enums.RelatedEntityType;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +35,7 @@ public class CalendarEventService {
     private final CustomUserDetailsService userDetailsService;
     private final LeadRepository leadRepository;
     private final DealRepository dealRepository;
+    private final NotificationService notificationService;
 
     public List<CalendarEventResponse> getEventsBetween(LocalDateTime start, LocalDateTime end, Boolean ownOnly) {
         if (Boolean.TRUE.equals(ownOnly)) {
@@ -75,12 +81,26 @@ public class CalendarEventService {
         }
 
         event = calendarEventRepository.save(event);
+        
+        notificationService.createNotification(
+                event.getOwner(),
+                "Meeting Scheduled",
+                "You have successfully scheduled: " + event.getTitle(),
+                NotificationType.MEETING_SCHEDULED,
+                NotificationPriority.LOW,
+                RelatedEntityType.MEETING,
+                event.getId(),
+                "/calendar"
+        );
+        
         return CalendarEventResponse.from(event);
     }
 
     @Transactional
     public CalendarEventResponse update(Long id, Map<String, Object> data) {
         CalendarEvent event = findEvent(id);
+
+        EventStatus oldStatus = event.getStatus();
 
         if (data.containsKey("title")) event.setTitle((String) data.get("title"));
         if (data.containsKey("description")) event.setDescription((String) data.get("description"));
@@ -105,6 +125,42 @@ public class CalendarEventService {
         }
 
         event = calendarEventRepository.save(event);
+        
+        if (oldStatus != EventStatus.COMPLETED && event.getStatus() == EventStatus.COMPLETED) {
+            notificationService.createNotification(
+                    event.getOwner(),
+                    "Meeting Completed",
+                    "Meeting marked as completed: " + event.getTitle(),
+                    NotificationType.MEETING_COMPLETED,
+                    NotificationPriority.LOW,
+                    RelatedEntityType.MEETING,
+                    event.getId(),
+                    "/calendar"
+            );
+        } else if (oldStatus != EventStatus.CANCELED && event.getStatus() == EventStatus.CANCELED) {
+            notificationService.createNotification(
+                    event.getOwner(),
+                    "Meeting Cancelled",
+                    "Meeting cancelled: " + event.getTitle(),
+                    NotificationType.MEETING_CANCELLED,
+                    NotificationPriority.MEDIUM,
+                    RelatedEntityType.MEETING,
+                    event.getId(),
+                    "/calendar"
+            );
+        } else {
+            notificationService.createNotification(
+                    event.getOwner(),
+                    "Meeting Updated",
+                    "Meeting details updated for: " + event.getTitle(),
+                    NotificationType.SYSTEM_ALERT,
+                    NotificationPriority.LOW,
+                    RelatedEntityType.MEETING,
+                    event.getId(),
+                    "/calendar"
+            );
+        }
+        
         return CalendarEventResponse.from(event);
     }
 
@@ -112,6 +168,17 @@ public class CalendarEventService {
     public void delete(Long id) {
         CalendarEvent event = findEvent(id);
         calendarEventRepository.delete(event);
+        
+        notificationService.createNotification(
+                event.getOwner(),
+                "Meeting Deleted",
+                "Meeting deleted: " + event.getTitle(),
+                NotificationType.MEETING_CANCELLED,
+                NotificationPriority.MEDIUM,
+                RelatedEntityType.MEETING,
+                event.getId(),
+                "/calendar"
+        );
     }
 
     private CalendarEvent findEvent(Long id) {
@@ -128,6 +195,31 @@ public class CalendarEventService {
             } catch (Exception ex) {
                 return LocalDateTime.parse(dtString);
             }
+        }
+    }
+
+    @Scheduled(cron = "0 * * * * *") // Run every minute
+    @Transactional
+    public void scheduleMeetingReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime in15Minutes = now.plusMinutes(15);
+        LocalDateTime in16Minutes = now.plusMinutes(16);
+
+        List<CalendarEvent> upcomingMeetings = calendarEventRepository.findByStartTimeBetween(in15Minutes, in16Minutes).stream()
+                .filter(e -> e.getStatus() == EventStatus.SCHEDULED)
+                .collect(Collectors.toList());
+
+        for (CalendarEvent event : upcomingMeetings) {
+            notificationService.createNotification(
+                    event.getOwner(),
+                    "Meeting Starts Soon",
+                    "Your meeting '" + event.getTitle() + "' starts in 15 minutes.",
+                    NotificationType.MEETING_REMINDER,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.MEETING,
+                    event.getId(),
+                    "/calendar"
+            );
         }
     }
 }

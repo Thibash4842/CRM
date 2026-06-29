@@ -17,6 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.scratchio.crm.entity.enums.NotificationType;
+import com.scratchio.crm.entity.enums.NotificationPriority;
+import com.scratchio.crm.entity.enums.RelatedEntityType;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,7 @@ public class LeadService {
     private final ClientRepository clientRepository;
     private final DealRepository dealRepository;
     private final TaskRepository taskRepository;
+    private final NotificationService notificationService;
 
     public List<LeadResponse> getAll(String search, LeadStatus status, String source) {
         Specification<Lead> spec = (root, query, cb) -> cb.isFalse(root.get("isDeleted"));
@@ -85,6 +89,32 @@ public class LeadService {
 
         lead = leadRepository.save(lead);
         activityService.log("LEAD", lead.getId(), ActivityType.CREATED, "Lead created", lead.getFullName());
+
+        if (lead.getAssignedTo() != null && !lead.getAssignedTo().getId().equals(currentUser.getId())) {
+            notificationService.createNotification(
+                    lead.getAssignedTo(),
+                    "New Lead Assigned",
+                    "You have been assigned a new lead: " + lead.getFullName(),
+                    NotificationType.NEW_LEAD_ASSIGNED,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.LEAD,
+                    lead.getId(),
+                    "/leads/" + lead.getId()
+            );
+        } else if (lead.getAssignedTo() == null || lead.getAssignedTo().getId().equals(currentUser.getId())) {
+            // Self-assigned or unassigned, optionally notify creator if they want it
+            notificationService.createNotification(
+                    currentUser,
+                    "Lead Created",
+                    "You created a new lead: " + lead.getFullName(),
+                    NotificationType.SYSTEM_ALERT,
+                    NotificationPriority.LOW,
+                    RelatedEntityType.LEAD,
+                    lead.getId(),
+                    "/leads/" + lead.getId()
+            );
+        }
+
         return LeadResponse.from(lead);
     }
 
@@ -107,6 +137,19 @@ public class LeadService {
             if (lead.getStatus() != newStatus) {
                 changes.append("Status updated from ").append(lead.getStatus()).append(" to ").append(newStatus).append(". ");
                 lead.setStatus(newStatus);
+
+                if (lead.getAssignedTo() != null) {
+                    notificationService.createNotification(
+                            lead.getAssignedTo(),
+                            "Lead Status Changed",
+                            "Lead " + lead.getFullName() + " status changed to " + newStatus,
+                            NotificationType.LEAD_STATUS_CHANGED,
+                            NotificationPriority.MEDIUM,
+                            RelatedEntityType.LEAD,
+                            lead.getId(),
+                            "/leads/" + lead.getId()
+                    );
+                }
             }
         }
         
@@ -117,9 +160,25 @@ public class LeadService {
             if ((oldId == null && newId != null) || (oldId != null && !oldId.equals(newId))) {
                 User newUser = newId != null ? userRepository.findById(newId).orElse(null) : null;
                 lead.setAssignedTo(newUser);
-                String oldName = oldId != null ? lead.getAssignedTo().getFullName() : "Unassigned";
+                String oldName = oldId != null ? userRepository.findById(oldId).map(User::getFullName).orElse("Unassigned") : "Unassigned";
                 String newName = newUser != null ? newUser.getFullName() : "Unassigned";
                 changes.append("Owner updated from ").append(oldName).append(" to ").append(newName).append(". ");
+
+                if (newUser != null) {
+                    User currentUser = userDetailsService.getCurrentUserEntity();
+                    if (!newUser.getId().equals(currentUser.getId())) {
+                        notificationService.createNotification(
+                                newUser,
+                                "Lead Reassigned",
+                                "Lead " + lead.getFullName() + " was assigned to you.",
+                                NotificationType.NEW_LEAD_ASSIGNED,
+                                NotificationPriority.HIGH,
+                                RelatedEntityType.LEAD,
+                                lead.getId(),
+                                "/leads/" + lead.getId()
+                        );
+                    }
+                }
             }
         }
 
@@ -146,6 +205,19 @@ public class LeadService {
             if (lead.getPriority() != newPriority) {
                 changes.append("Priority updated from ").append(lead.getPriority()).append(" to ").append(newPriority).append(". ");
                 lead.setPriority(newPriority);
+                
+                if (lead.getAssignedTo() != null) {
+                    notificationService.createNotification(
+                            lead.getAssignedTo(),
+                            "Lead Priority Changed",
+                            "Lead " + lead.getFullName() + " priority changed to " + newPriority,
+                            NotificationType.SYSTEM_ALERT,
+                            NotificationPriority.MEDIUM,
+                            RelatedEntityType.LEAD,
+                            lead.getId(),
+                            "/leads/" + lead.getId()
+                    );
+                }
             }
         }
 
@@ -185,6 +257,19 @@ public class LeadService {
         });
         leadRepository.delete(lead);
         activityService.log("LEAD", id, ActivityType.DELETED, "Lead deleted", lead.getFullName());
+        
+        if (lead.getAssignedTo() != null) {
+            notificationService.createNotification(
+                    lead.getAssignedTo(),
+                    "Lead Deleted",
+                    "Lead " + lead.getFullName() + " has been permanently deleted.",
+                    NotificationType.SYSTEM_ALERT,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.LEAD,
+                    lead.getId(),
+                    null
+            );
+        }
     }
 
     @Transactional
@@ -203,6 +288,20 @@ public class LeadService {
         clientService.convertFromLead(id);
         
         activityService.log("LEAD", lead.getId(), ActivityType.CONVERTED, "Lead converted", lead.getFullName());
+        
+        if (lead.getAssignedTo() != null) {
+            notificationService.createNotification(
+                    lead.getAssignedTo(),
+                    "Lead Converted",
+                    "Lead " + lead.getFullName() + " was successfully converted to a client.",
+                    NotificationType.SYSTEM_ALERT,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.LEAD,
+                    lead.getId(),
+                    "/clients"
+            );
+        }
+        
         return LeadResponse.from(lead);
     }
 

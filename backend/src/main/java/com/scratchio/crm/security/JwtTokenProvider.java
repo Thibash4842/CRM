@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Component
+@SuppressWarnings("null")
 public class JwtTokenProvider {
 
     @Value("${app.jwt.secret}")

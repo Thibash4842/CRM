@@ -12,8 +12,13 @@ import com.scratchio.crm.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import com.scratchio.crm.entity.enums.NotificationType;
+import com.scratchio.crm.entity.enums.NotificationPriority;
+import com.scratchio.crm.entity.enums.RelatedEntityType;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,6 +36,7 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final ActivityService activityService;
     private final CustomUserDetailsService userDetailsService;
+    private final NotificationService notificationService;
 
     public List<TaskResponse> getAll(TaskStatus status) {
         List<Task> tasks = status != null ? taskRepository.findByStatus(status) : taskRepository.findAll();
@@ -57,12 +63,40 @@ public class TaskService {
         linkRelations(task, data);
         task = taskRepository.save(task);
         activityService.log("TASK", task.getId(), ActivityType.CREATED, "Task created", task.getTitle());
+        
+        if (task.getAssignedTo() != null && !task.getAssignedTo().getId().equals(currentUser.getId())) {
+            notificationService.createNotification(
+                    task.getAssignedTo(),
+                    "New Task Assigned",
+                    "You have been assigned a new task: " + task.getTitle(),
+                    NotificationType.TASK_ASSIGNED,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.TASK,
+                    task.getId(),
+                    "/tasks/" + task.getId()
+            );
+        } else {
+            notificationService.createNotification(
+                    currentUser,
+                    "Task Created",
+                    "Task created successfully: " + task.getTitle(),
+                    NotificationType.SYSTEM_ALERT,
+                    NotificationPriority.LOW,
+                    RelatedEntityType.TASK,
+                    task.getId(),
+                    "/tasks/" + task.getId()
+            );
+        }
+        
         return TaskResponse.from(task);
     }
 
     @Transactional
     public TaskResponse update(Long id, Map<String, Object> data) {
         Task task = findTask(id);
+
+        Long oldAssigneeId = task.getAssignedTo() != null ? task.getAssignedTo().getId() : null;
+        TaskStatus oldStatus = task.getStatus();
 
         if (data.containsKey("title")) task.setTitle((String) data.get("title"));
         if (data.containsKey("description")) task.setDescription((String) data.get("description"));
@@ -77,12 +111,58 @@ public class TaskService {
         linkRelations(task, data);
 
         task = taskRepository.save(task);
+        
+        User currentUser = userDetailsService.getCurrentUserEntity();
+        Long newAssigneeId = task.getAssignedTo() != null ? task.getAssignedTo().getId() : null;
+        
+        if (newAssigneeId != null && !newAssigneeId.equals(oldAssigneeId) && !newAssigneeId.equals(currentUser.getId())) {
+            notificationService.createNotification(
+                    task.getAssignedTo(),
+                    "Task Reassigned",
+                    "Task " + task.getTitle() + " was assigned to you.",
+                    NotificationType.TASK_ASSIGNED,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.TASK,
+                    task.getId(),
+                    "/tasks/" + task.getId()
+            );
+        }
+        
+        if (oldStatus != TaskStatus.COMPLETED && task.getStatus() == TaskStatus.COMPLETED) {
+            if (task.getAssignedTo() != null) {
+                notificationService.createNotification(
+                        task.getAssignedTo(),
+                        "Task Completed",
+                        "Task " + task.getTitle() + " has been marked as completed.",
+                        NotificationType.TASK_COMPLETED,
+                        NotificationPriority.LOW,
+                        RelatedEntityType.TASK,
+                        task.getId(),
+                        "/tasks/" + task.getId()
+                );
+            }
+        }
+        
         return TaskResponse.from(task);
     }
 
     @Transactional
     public void delete(Long id) {
-        taskRepository.delete(findTask(id));
+        Task task = findTask(id);
+        taskRepository.delete(task);
+        
+        if (task.getAssignedTo() != null) {
+            notificationService.createNotification(
+                    task.getAssignedTo(),
+                    "Task Deleted",
+                    "Task '" + task.getTitle() + "' has been deleted.",
+                    NotificationType.SYSTEM_ALERT,
+                    NotificationPriority.HIGH,
+                    RelatedEntityType.TASK,
+                    task.getId(),
+                    null
+            );
+        }
     }
 
     private void linkRelations(Task task, Map<String, Object> data) {
@@ -105,5 +185,70 @@ public class TaskService {
 
     private Task findTask(Long id) {
         return taskRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    }
+
+    @Scheduled(cron = "0 0 8 * * *") // Run every day at 8:00 AM
+    @Transactional
+    public void scheduleDailyTaskNotifications() {
+        LocalDate today = LocalDate.now();
+        List<Task> pendingTasks = taskRepository.findAll().stream()
+                .filter(t -> t.getStatus() != TaskStatus.COMPLETED && t.getAssignedTo() != null)
+                .collect(Collectors.toList());
+
+        for (Task task : pendingTasks) {
+            if (task.getDueDate() != null) {
+                LocalDate dueDate = task.getDueDate().toLocalDate();
+                if (dueDate.isEqual(today)) {
+                    notificationService.createNotification(
+                            task.getAssignedTo(),
+                            "Task Due Today",
+                            "Task '" + task.getTitle() + "' is due today.",
+                            NotificationType.TASK_DUE,
+                            NotificationPriority.HIGH,
+                            RelatedEntityType.TASK,
+                            task.getId(),
+                            "/tasks/" + task.getId()
+                    );
+                } else if (dueDate.isBefore(today)) {
+                    notificationService.createNotification(
+                            task.getAssignedTo(),
+                            "Task Overdue",
+                            "Task '" + task.getTitle() + "' is overdue!",
+                            NotificationType.TASK_OVERDUE,
+                            NotificationPriority.HIGH,
+                            RelatedEntityType.TASK,
+                            task.getId(),
+                            "/tasks/" + task.getId()
+                    );
+                }
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 * * * * *") // Run every minute
+    @Transactional
+    public void scheduleMinuteTaskReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneMinuteAgo = now.minusMinutes(1);
+        
+        List<Task> tasksWithReminders = taskRepository.findAll().stream()
+                .filter(t -> t.getStatus() != TaskStatus.COMPLETED && t.getAssignedTo() != null && t.getReminderAt() != null)
+                .collect(Collectors.toList());
+
+        for (Task task : tasksWithReminders) {
+            // If reminder time is within the last minute (to avoid sending it repeatedly)
+            if (task.getReminderAt().isAfter(oneMinuteAgo) && task.getReminderAt().isBefore(now.plusSeconds(1))) {
+                notificationService.createNotification(
+                        task.getAssignedTo(),
+                        "Task Reminder",
+                        "Reminder for task: " + task.getTitle(),
+                        NotificationType.TASK_DUE,
+                        NotificationPriority.MEDIUM,
+                        RelatedEntityType.TASK,
+                        task.getId(),
+                        "/tasks/" + task.getId()
+                );
+            }
+        }
     }
 }

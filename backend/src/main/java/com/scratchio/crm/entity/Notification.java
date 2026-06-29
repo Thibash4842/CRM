@@ -2,9 +2,11 @@ package com.scratchio.crm.entity;
 
 import com.scratchio.crm.entity.enums.NotificationPriority;
 import com.scratchio.crm.entity.enums.NotificationType;
+import com.scratchio.crm.entity.enums.RelatedEntityType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -21,40 +23,48 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipient_id", nullable = false)
-    private User recipient;
-
     @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
-    private String description;
+    private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NotificationType type;
+    @Column(name = "notification_type")
+    private NotificationType notificationType;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "priority")
     private NotificationPriority priority = NotificationPriority.MEDIUM;
 
-    @Column(name = "related_record_name")
-    private String relatedRecordName;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "related_entity_type")
+    private RelatedEntityType relatedEntityType;
 
-    @Column(name = "related_record_link")
-    private String relatedRecordLink;
+    @Column(name = "related_entity_id")
+    private Long relatedEntityId;
+
+    @Column(name = "action_url")
+    private String actionUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipient_id", nullable = false)
+    private User recipientUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
 
     @Builder.Default
     @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
 
-    @Builder.Default
-    @Column(name = "is_archived", nullable = false)
-    private Boolean isArchived = false;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

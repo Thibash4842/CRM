@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LeadProvider } from './context/LeadContext';
+import { WebSocketProvider } from './context/WebSocketContext';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -45,40 +46,42 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <LeadProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-              <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+        <WebSocketProvider>
+          <LeadProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+                <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
 
-              <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
-                <Route index element={<Dashboard />} />
-                <Route path="leads" element={<Leads />} />
-                <Route path="leads/edit/:id" element={<LeadEdit />} />
-                <Route path="leads/converted" element={<Leads type="converted" />} />
-                <Route path="leads/lost" element={<Leads type="lost" />} />
-                <Route path="leads/trash" element={<Trash />} />
-                <Route path="contacts" element={<Clients />} />
-                <Route path="accounts" element={<Accounts />} />
-                <Route path="deals" element={<Deals />} />
-                <Route path="activities/:type" element={<Activities />} />
-                <Route path="notes" element={<Notes />} />
-                <Route path="clients" element={<Clients />} />
-                <Route path="projects" element={<Projects />} />
-                <Route path="calendar" element={<Calendar />} />
-                <Route path="invoices" element={<Invoices />} />
-                <Route path="payments" element={<Payments />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="users" element={<UsersPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="notifications" element={<Notifications />} />
-              </Route>
+                <Route element={<PrivateRoute><AppLayout /></PrivateRoute>}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="leads" element={<Leads />} />
+                  <Route path="leads/edit/:id" element={<LeadEdit />} />
+                  <Route path="leads/converted" element={<Leads type="converted" />} />
+                  <Route path="leads/lost" element={<Leads type="lost" />} />
+                  <Route path="leads/trash" element={<Trash />} />
+                  <Route path="contacts" element={<Clients />} />
+                  <Route path="accounts" element={<Accounts />} />
+                  <Route path="deals" element={<Deals />} />
+                  <Route path="activities/:type" element={<Activities />} />
+                  <Route path="notes" element={<Notes />} />
+                  <Route path="clients" element={<Clients />} />
+                  <Route path="projects" element={<Projects />} />
+                  <Route path="calendar" element={<Calendar />} />
+                  <Route path="invoices" element={<Invoices />} />
+                  <Route path="payments" element={<Payments />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="users" element={<UsersPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="notifications" element={<Notifications />} />
+                </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </LeadProvider>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </LeadProvider>
+        </WebSocketProvider>
       </AuthProvider>
     </ThemeProvider>
   );
