@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Target } from 'lucide-react';
 import { leadsApi, clientsApi } from '../services/api';
 import { useLeadsContext } from '../context/LeadContext';
@@ -28,6 +29,7 @@ const emptyForm = {
 
 export default function Leads({ type = 'active' }) {
   const { leads, loading, fetchLeads: contextFetchLeads, updateLeadState } = useLeadsContext();
+  const location = useLocation();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [kpiFilter, setKpiFilter] = useState('');
@@ -106,6 +108,13 @@ export default function Leads({ type = 'active' }) {
   useEffect(() => {
     contextFetchLeads(type, {});
   }, [contextFetchLeads, type]);
+
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      openCreate();
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const openCreate = () => { setEditing(null); setForm(emptyForm); setModalOpen(true); };
 

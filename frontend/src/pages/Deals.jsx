@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -13,6 +14,7 @@ import KanbanColumn from '../components/deals/KanbanColumn';
 import DealCard from '../components/deals/DealCard';
 
 export default function Deals() {
+  const location = useLocation();
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeDeal, setActiveDeal] = useState(null);
@@ -32,6 +34,13 @@ export default function Deals() {
   };
 
   useEffect(() => { fetchDeals(); }, []);
+
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      setModalOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const filteredDeals = useMemo(() => {
     return deals.filter(deal => {

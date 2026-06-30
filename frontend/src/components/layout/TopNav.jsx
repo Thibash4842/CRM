@@ -5,11 +5,24 @@ import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CommandPalette from './CommandPalette';
 
 export default function TopNav({ onMenuClick }) {
   const { user, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -27,13 +40,12 @@ export default function TopNav({ onMenuClick }) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/50 w-80">
+          <div 
+            onClick={() => setSearchOpen(true)}
+            className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100/80 dark:bg-slate-800/50 w-80 cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all"
+          >
             <Search className="w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search anything..."
-              className="bg-transparent text-sm outline-none flex-1 placeholder:text-slate-400"
-            />
+            <span className="text-sm text-slate-400 flex-1">Search anything...</span>
             <kbd className="text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">⌘K</kbd>
           </div>
         </div>
@@ -65,6 +77,7 @@ export default function TopNav({ onMenuClick }) {
           </div>
         </div>
       </div>
+      <CommandPalette isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

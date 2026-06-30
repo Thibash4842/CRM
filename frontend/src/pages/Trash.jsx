@@ -1,19 +1,30 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Trash2, Search, Filter, RotateCcw, XCircle, AlertTriangle } from 'lucide-react';
+import { Trash2, Search, Filter, RotateCcw, XCircle, AlertTriangle, CheckCircle } from 'lucide-react';
 import { leadsApi } from '../services/api';
 import PageHeader, { FilterSelect, EmptyState, LoadingSpinner } from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
+import { useLeadsContext } from '../context/LeadContext';
 import { formatDateTime } from '../utils/constants';
 
 export default function Trash() {
   const { user } = useAuth();
+  const { invalidateCache } = useLeadsContext();
   const isAdmin = user?.role === 'ADMIN';
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [reasonFilter, setReasonFilter] = useState('');
+  
+  const [restoringIds, setRestoringIds] = useState([]);
+  const [deletingIds, setDeletingIds] = useState([]);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  }, []);
 
   const fetchTrash = useCallback(async () => {
     setLoading(true);
@@ -30,21 +41,31 @@ export default function Trash() {
   useEffect(() => { fetchTrash(); }, [fetchTrash]);
 
   const handleRestore = async (id) => {
+    setRestoringIds(prev => [...prev, id]);
     try {
       await leadsApi.restore(id);
-      fetchTrash();
+      setLeads(prev => prev.filter(lead => lead.id !== id));
+      invalidateCache();
+      showToast('Lead successfully restored!');
     } catch (err) {
-      alert(err.message);
+      showToast(err.message || 'Failed to restore lead', 'error');
+    } finally {
+      setRestoringIds(prev => prev.filter(x => x !== id));
     }
   };
 
   const handlePermanentDelete = async (id) => {
     if (!window.confirm('Are you sure you want to permanently delete this lead? This action cannot be undone.')) return;
+    setDeletingIds(prev => [...prev, id]);
     try {
       await leadsApi.delete(id);
-      fetchTrash();
+      setLeads(prev => prev.filter(lead => lead.id !== id));
+      invalidateCache();
+      showToast('Lead permanently deleted!');
     } catch (err) {
-      alert(err.message);
+      showToast(err.message || 'Failed to delete lead', 'error');
+    } finally {
+      setDeletingIds(prev => prev.filter(x => x !== id));
     }
   };
 
@@ -113,17 +134,35 @@ export default function Trash() {
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <Button variant="secondary" onClick={() => handleRestore(lead.id)}>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => handleRestore(lead.id)}
+                  loading={restoringIds.includes(lead.id)}
+                  disabled={deletingIds.includes(lead.id)}
+                >
                   <RotateCcw className="w-4 h-4 mr-2" /> Restore
                 </Button>
                 {isAdmin && (
-                  <Button variant="danger" onClick={() => handlePermanentDelete(lead.id)}>
+                  <Button 
+                    variant="danger" 
+                    onClick={() => handlePermanentDelete(lead.id)}
+                    loading={deletingIds.includes(lead.id)}
+                    disabled={restoringIds.includes(lead.id)}
+                  >
                     <AlertTriangle className="w-4 h-4 mr-2" /> Delete Permanently
                   </Button>
                 )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl text-white font-medium animate-toast-in ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+          {toast.type === 'error' ? <XCircle className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+          {toast.message}
         </div>
       )}
     </div>

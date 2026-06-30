@@ -38,8 +38,12 @@ export function LeadProvider({ children }) {
     setLeads(prev => prev.map(l => (String(l.id) === String(id) ? { ...l, ...updatedData } : l)));
   }, []);
 
+  const invalidateCache = useCallback(() => {
+    cacheKeyRef.current = '';
+  }, []);
+
   return (
-    <LeadContext.Provider value={{ leads, loading, fetchLeads, updateLeadState, setLeads }}>
+    <LeadContext.Provider value={{ leads, loading, fetchLeads, updateLeadState, setLeads, invalidateCache }}>
       {children}
     </LeadContext.Provider>
   );
