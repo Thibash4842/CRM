@@ -1,0 +1,61 @@
+/* designTokens.css */
+:root {
+  /* Color palette – premium gradient and neutral tones */
+  --color-primary-h: 210; /* Blue hue */
+  --color-primary-s: 60%;
+  --color-primary-l: 52%;
+  --color-primary: hsl(var(--color-primary-h), var(--color-primary-s), var(--color-primary-l));
+  --color-primary-dark: hsl(var(--color-primary-h), var(--color-primary-s), 42%);
+  --color-primary-light: hsl(var(--color-primary-h), var(--color-primary-s), 62%);
+  --color-success: #34D399; /* emerald */
+  --color-danger: #EF4444; /* red */
+  --color-warning: #F59E0B; /* amber */
+  --color-bg: #F4F7FA;
+  --color-bg-dark: #1F2937;
+  --color-surface: rgba(255,255,255,0.85);
+  --color-surface-dark: rgba(0,0,0,0.85);
+  --color-text: #111827;
+  --color-text-dark: #F9FAFB;
+
+  /* Spacing scale – 4px base */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --space-10: 64px;
+
+  /* Typography */
+  --font-family-base: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-size-base: 0.9375rem; /* 15px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-sm: 0.8125rem;  /* 13px */
+  --line-height-base: 1.5;
+}
+
+/* Dark mode – prefers-color-scheme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: var(--color-bg-dark);
+    --color-surface: var(--color-surface-dark);
+    --color-text: var(--color-text-dark);
+  }
+}
+
+/* Utility classes for quick use */
+.mt-1 { margin-top: var(--space-1); }
+.mt-2 { margin-top: var(--space-2); }
+.mt-3 { margin-top: var(--space-3); }
+.mb-1 { margin-bottom: var(--space-1); }
+.mb-2 { margin-bottom: var(--space-2); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.rounded { border-radius: 8px; }
+.shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.shadow-md { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.text-primary { color: var(--color-primary); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-surface { background-color: var(--color-surface); }
