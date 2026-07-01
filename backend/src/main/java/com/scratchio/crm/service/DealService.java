@@ -33,6 +33,10 @@ public class DealService {
         return dealRepository.findAll().stream().map(DealResponse::from).collect(Collectors.toList());
     }
 
+    public List<DealResponse> getByLeadId(Long leadId) {
+        return dealRepository.findByLeadId(leadId).stream().map(DealResponse::from).collect(Collectors.toList());
+    }
+
     public List<DealResponse> getByStage(DealStage stage) {
         return dealRepository.findByStage(stage).stream().map(DealResponse::from).collect(Collectors.toList());
     }

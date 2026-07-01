@@ -122,6 +122,67 @@ public class EntityMappers {
     }
 
     @Data @Builder
+    public static class AccountResponse {
+        private Long id;
+        private String name;
+        private String industry;
+        private String website;
+        private String phone;
+        private String billingAddress;
+        private Long leadId;
+        private Long ownerId;
+        private String ownerName;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public static AccountResponse from(Account a) {
+            if (a == null) return null;
+            return AccountResponse.builder()
+                    .id(a.getId()).name(a.getName()).industry(a.getIndustry())
+                    .website(a.getWebsite()).phone(a.getPhone())
+                    .billingAddress(a.getBillingAddress())
+                    .leadId(a.getLead() != null ? a.getLead().getId() : null)
+                    .ownerId(a.getOwner() != null ? a.getOwner().getId() : null)
+                    .ownerName(a.getOwner() != null ? a.getOwner().getFullName() : null)
+                    .createdAt(a.getCreatedAt())
+                    .updatedAt(a.getUpdatedAt()).build();
+        }
+    }
+
+    @Data @Builder
+    public static class ContactResponse {
+        private Long id;
+        private String firstName;
+        private String lastName;
+        private String fullName;
+        private String email;
+        private String phone;
+        private String title;
+        private Long accountId;
+        private String accountName;
+        private Long leadId;
+        private Long ownerId;
+        private String ownerName;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public static ContactResponse from(Contact c) {
+            if (c == null) return null;
+            return ContactResponse.builder()
+                    .id(c.getId()).firstName(c.getFirstName()).lastName(c.getLastName())
+                    .fullName(c.getFirstName() + " " + c.getLastName())
+                    .email(c.getEmail()).phone(c.getPhone()).title(c.getTitle())
+                    .accountId(c.getAccount() != null ? c.getAccount().getId() : null)
+                    .accountName(c.getAccount() != null ? c.getAccount().getName() : null)
+                    .leadId(c.getLead() != null ? c.getLead().getId() : null)
+                    .ownerId(c.getOwner() != null ? c.getOwner().getId() : null)
+                    .ownerName(c.getOwner() != null ? c.getOwner().getFullName() : null)
+                    .createdAt(c.getCreatedAt())
+                    .updatedAt(c.getUpdatedAt()).build();
+        }
+    }
+
+    @Data @Builder
     public static class DealResponse {
         private Long id;
         private String title;

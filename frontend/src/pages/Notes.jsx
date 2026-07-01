@@ -9,6 +9,7 @@ import NoteModal from '../components/notes/NoteModal';
 import NoteDetailsDrawer from '../components/notes/NoteDetailsDrawer';
 import NotesToast from '../components/notes/NotesToast';
 import TagManager from '../components/notes/TagManager';
+import Modal from '../components/ui/Modal';
 import { notesService } from '../services/notesService';
 import { tagsService } from '../services/tagsService';
 
@@ -34,11 +35,10 @@ export default function Notes() {
   const [selectedNote, setSelectedNote] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
 
   // Toast State
   const [toast, setToast] = useState({ show: false, message: '', type: 'success', id: 0, duration: 5000 });
-  const [undoState, setUndoState] = useState(null);
-  const [deleteTimeoutId, setDeleteTimeoutId] = useState(null);
 
   // Load Notes on Mount
   useEffect(() => {
@@ -211,76 +211,38 @@ export default function Notes() {
     }
   }, [selectedNote, showToast]);
 
-  // OPTIMISTIC DELETE WITH UNDO CAPABILITY
-  const handleDelete = useCallback(async (id) => {
-    // If there is a pending delete timeout, execute it immediately first
-    if (deleteTimeoutId) {
-      clearTimeout(deleteTimeoutId);
-      // We don't block the UI, just trigger delete in background
-      if (undoState) {
-        notesService.delete(undoState.note.id).catch(() => {});
-      }
+  // PERMANENT DELETE (Confirmation Phase)
+  const handleDelete = useCallback((id) => {
+    setDeleteCandidate(id);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteCandidate) return;
+    const id = deleteCandidate;
+    const noteToDelete = notes.find(n => n.id === id);
+    if (!noteToDelete) {
+      setDeleteCandidate(null);
+      return;
     }
 
-    const noteIndex = notes.findIndex(n => n.id === id);
-    if (noteIndex === -1) return;
-
-    const noteToDelete = notes[noteIndex];
-
-    // 1. Save state for potential undo
-    setUndoState({
-      note: noteToDelete,
-      index: noteIndex
-    });
-
-    // 2. Optimistic state delete (remove from list immediately)
-    setNotes(prevNotes => prevNotes.filter(n => n.id !== id));
-    setIsDrawerOpen(false);
-
-    // 3. Trigger Undo Toast Notification
-    setToast({
-      show: true,
-      message: `Note "${noteToDelete.title}" deleted.`,
-      type: 'undo',
-      id: Date.now(),
-      duration: 5000
-    });
-
-    // 4. Set delayed final deletion execution (5 seconds)
-    const timeoutId = setTimeout(async () => {
-      try {
-        await notesService.delete(id);
-        setUndoState(null);
-        setDeleteTimeoutId(null);
-      } catch (err) {
-        showToast(err.message || 'Failed to delete note from database', 'error');
+    setSaving(true);
+    setDeleteCandidate(null); // Close modal while saving
+    try {
+      await notesService.delete(id);
+      
+      setNotes(prevNotes => prevNotes.filter(n => n.id !== id));
+      setIsDrawerOpen(false);
+      showToast(`Note "${noteToDelete.title}" deleted.`, 'success');
+      
+      if (selectedNote && selectedNote.id === id) {
+        setSelectedNote(null);
       }
-    }, 5000);
-
-    setDeleteTimeoutId(timeoutId);
-  }, [notes, deleteTimeoutId, undoState, showToast]);
-
-  // UNDO DELETE HANDLER
-  const handleUndoDelete = useCallback(() => {
-    if (!undoState) return;
-
-    // 1. Cancel the deletion timeout
-    if (deleteTimeoutId) {
-      clearTimeout(deleteTimeoutId);
-      setDeleteTimeoutId(null);
+    } catch (err) {
+      showToast(err.message || 'Failed to delete note from database', 'error');
+    } finally {
+      setSaving(false);
     }
-
-    // 2. Restore note back to its index in state
-    setNotes(prevNotes => {
-      const restored = [...prevNotes];
-      restored.splice(undoState.index, 0, undoState.note);
-      return restored;
-    });
-
-    // 3. Clear undo references
-    setUndoState(null);
-    showToast('Note restored successfully.', 'success');
-  }, [undoState, deleteTimeoutId, showToast]);
+  }, [deleteCandidate, notes, showToast, selectedNote]);
 
   // DUPLICATE ACTION
   const handleDuplicate = useCallback(async (id) => {
@@ -703,8 +665,32 @@ export default function Notes() {
       <NotesToast
         toast={toast}
         onClose={handleCloseToast}
-        onUndo={handleUndoDelete}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteCandidate}
+        onClose={() => setDeleteCandidate(null)}
+        title="Delete Note?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-600 dark:text-slate-300">
+            This action cannot be undone. Are you sure you want to delete this note?
+          </p>
+          <div className="flex items-center justify-end gap-3 mt-6">
+            <Button variant="secondary" onClick={() => setDeleteCandidate(null)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

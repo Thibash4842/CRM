@@ -361,20 +361,30 @@ export default function NoteModal({ isOpen, onClose, note, onSave, tagLibrary = 
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               Assign Owner
             </label>
-            <select
+            <input
+              type="text"
+              required
               value={owner.name}
               onChange={(e) => {
-                const found = mockOwners.find(o => o.name === e.target.value);
-                if (found) setOwner(found);
+                const name = e.target.value;
+                const initials = name
+                  .trim()
+                  .split(/\s+/)
+                  .map(word => word[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2) || '?';
+                
+                const matched = mockOwners.find(o => o.name.toLowerCase() === name.trim().toLowerCase());
+                setOwner({
+                  name,
+                  initials: matched ? matched.initials : initials,
+                  color: matched ? matched.color : 'bg-indigo-600'
+                });
               }}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
-            >
-              {mockOwners.map((o) => (
-                <option key={o.name} value={o.name}>
-                  {o.name}
-                </option>
-              ))}
-            </select>
+              placeholder="E.g., Sarah Jenkins"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
           </div>
 
           {/* Quick flags toggles */}

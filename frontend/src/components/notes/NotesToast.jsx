@@ -23,7 +23,6 @@ export default function NotesToast({
       setProgress(prev => {
         if (prev <= 0) {
           clearInterval(timer);
-          onClose();
           return 0;
         }
         return prev - step;
@@ -32,6 +31,12 @@ export default function NotesToast({
 
     return () => clearInterval(timer);
   }, [toast.show, toast.id]);
+
+  useEffect(() => {
+    if (progress <= 0 && toast.show) {
+      onClose();
+    }
+  }, [progress, toast.show, onClose]);
 
   const getStyle = () => {
     switch (toast.type) {

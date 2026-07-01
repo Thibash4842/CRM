@@ -7,6 +7,7 @@ import { Pin, Star, Paperclip, Calendar, User, Link2, Edit, Trash2, Archive, Sha
 import ShareDialog from './sharing/ShareDialog';
 import CommentsSection from './comments/CommentsSection';
 import VersionHistory from './VersionHistory';
+import ActivityTimeline from './ActivityTimeline';
 
 export default function NoteDetailsDrawer({
   isOpen,
@@ -357,6 +358,16 @@ export default function NoteDetailsDrawer({
             ) : activeTab === 'comments' ? (
               <div className="h-[500px] animate-in fade-in slide-in-from-bottom-2">
                 <CommentsSection note={note} onCommentsUpdated={onCommentsUpdated} />
+              </div>
+            ) : activeTab === 'versions' ? (
+              <div className="animate-in fade-in slide-in-from-bottom-2 pb-4">
+                <VersionHistory
+                  noteId={note.id}
+                  onClose={onClose}
+                  onRestore={(restoredNote) => {
+                    onCommentsUpdated && onCommentsUpdated(restoredNote);
+                  }}
+                />
               </div>
             ) : (
               /* Activity Tab */

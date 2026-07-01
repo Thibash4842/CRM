@@ -1,4 +1,5 @@
-import { Phone, Mail, Calendar, CheckCircle2, Globe, MessageCircle, FileText, Eye } from 'lucide-react';
+import { Phone, Mail, Calendar, CheckCircle2, Globe, MessageCircle, FileText, Eye, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const TIMELINE_GROUPS = [
   {
@@ -32,13 +33,42 @@ const TIMELINE_GROUPS = [
   }
 ];
 
-export default function ContactTimeline() {
+export default function ContactTimeline({ leadId }) {
+  const [timelineItems, setTimelineItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!leadId) return;
+    setLoading(true);
+    import('../../services/api').then(({ activitiesApi }) => {
+      activitiesApi.getForEntity('LEAD', leadId).then(data => {
+        // Simple frontend aggregator for now
+        const items = (data || []).map(act => ({
+          id: act.id,
+          type: act.type.toLowerCase(),
+          icon: act.type === 'CALL' ? Phone : act.type === 'EMAIL' ? Mail : Calendar,
+          title: act.type.replace('_', ' ').toLowerCase(),
+          description: act.description,
+          time: new Date(act.createdAt).toLocaleString(),
+          createdAt: new Date(act.createdAt).getTime(),
+          color: act.type === 'CALL' ? 'text-blue-600' : 'text-emerald-600',
+          bg: act.type === 'CALL' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20'
+        }));
+        
+        // Sort newest first
+        items.sort((a, b) => b.createdAt - a.createdAt);
+        setTimelineItems([{ label: 'Recent History', items }]);
+        setLoading(false);
+      });
+    });
+  }, [leadId]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Activity Timeline</h3>
         <div className="flex items-center gap-2">
-          {['All', 'Calls', 'Emails', 'Meetings'].map(filter => (
+          {['All'].map(filter => (
             <button key={filter} className={`h-7 px-2.5 rounded-md text-xs font-medium transition-colors ${
               filter === 'All'
                 ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400'
@@ -50,39 +80,48 @@ export default function ContactTimeline() {
         </div>
       </div>
 
-      {TIMELINE_GROUPS.map(group => (
-        <div key={group.label}>
-          {/* Group Label */}
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{group.label}</span>
-            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-          </div>
-
-          {/* Items */}
-          <div className="relative ml-4 border-l-2 border-slate-100 dark:border-slate-800 space-y-5 pb-2">
-            {group.items.map(item => {
-              const Icon = item.icon;
-              return (
-                <div key={item.id} className="relative pl-7 group">
-                  {/* Dot */}
-                  <div className={`absolute -left-[13px] top-1 w-6 h-6 rounded-lg flex items-center justify-center ${item.bg} ${item.color} border-2 border-white dark:border-slate-950 shadow-sm group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-3 h-3" />
-                  </div>
-
-                  {/* Content */}
-                  <div className="rounded-lg border border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-950 p-3.5 hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</h4>
-                      <span className="text-[11px] text-slate-400 flex-shrink-0">{item.time}</span>
-                    </div>
-                    <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {loading ? (
+        <div className="animate-pulse space-y-4">
+          <div className="h-20 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full border border-slate-200/50 dark:border-slate-800"></div>
+          <div className="h-20 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full border border-slate-200/50 dark:border-slate-800"></div>
         </div>
-      ))}
+      ) : timelineItems[0]?.items.length === 0 ? (
+        <p className="text-sm text-slate-500">No timeline history found.</p>
+      ) : (
+        timelineItems.map(group => (
+          <div key={group.label}>
+            {/* Group Label */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{group.label}</span>
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+            </div>
+
+            {/* Items */}
+            <div className="relative ml-4 border-l-2 border-slate-100 dark:border-slate-800 space-y-5 pb-2">
+              {group.items.map(item => {
+                const Icon = item.icon || Activity;
+                return (
+                  <div key={item.id} className="relative pl-7 group">
+                    {/* Dot */}
+                    <div className={`absolute -left-[13px] top-1 w-6 h-6 rounded-lg flex items-center justify-center ${item.bg} ${item.color} border-2 border-white dark:border-slate-950 shadow-sm group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-3 h-3" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="rounded-lg border border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-950 p-3.5 hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 capitalize">{item.title}</h4>
+                        <span className="text-[11px] text-slate-400 flex-shrink-0">{item.time}</span>
+                      </div>
+                      <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }

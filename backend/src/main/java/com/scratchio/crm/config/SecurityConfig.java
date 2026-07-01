@@ -49,6 +49,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/notes/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/users/**").hasAnyRole("ADMIN", "MANAGER")
                 .anyRequest().authenticated()

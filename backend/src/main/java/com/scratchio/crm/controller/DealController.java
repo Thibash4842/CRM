@@ -32,6 +32,11 @@ public class DealController {
         return ResponseEntity.ok(ApiResponse.ok(dealService.getById(id)));
     }
 
+    @GetMapping("/lead/{leadId}")
+    public ResponseEntity<ApiResponse<List<DealResponse>>> getByLeadId(@PathVariable Long leadId) {
+        return ResponseEntity.ok(ApiResponse.ok(dealService.getByLeadId(leadId)));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<DealResponse>> create(@RequestBody Map<String, Object> data) {
         return ResponseEntity.ok(ApiResponse.ok(dealService.create(data)));

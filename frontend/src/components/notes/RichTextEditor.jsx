@@ -15,6 +15,8 @@ export default function RichTextEditor({ value, onChange, noteId }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [autosaveTime, setAutosaveTime] = useState(null);
 
+  const hasPromptedRef = useRef(null);
+
   // Initialize content on first load or when switching notes
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
@@ -25,9 +27,11 @@ export default function RichTextEditor({ value, onChange, noteId }) {
 
   // Load Autosave draft if exists
   useEffect(() => {
-    const draftKey = `scratchio_crm_notes_draft_${noteId || 'new'}`;
+    const currentId = noteId || 'new';
+    const draftKey = `scratchio_crm_notes_draft_${currentId}`;
     const draft = localStorage.getItem(draftKey);
-    if (draft && editorRef.current) {
+    if (draft && editorRef.current && hasPromptedRef.current !== currentId) {
+      hasPromptedRef.current = currentId;
       const confirmRestore = window.confirm("A draft was autosaved for this note. Would you like to restore it?");
       if (confirmRestore) {
         editorRef.current.innerHTML = draft;
@@ -36,6 +40,7 @@ export default function RichTextEditor({ value, onChange, noteId }) {
         showAutosaveTime();
       } else {
         localStorage.removeItem(draftKey);
+        hasPromptedRef.current = null;
       }
     }
   }, [noteId]);

@@ -102,10 +102,21 @@ export const leadsApi = {
 
 export const dealsApi = {
   getAll: (stage) => api.get(stage ? `/deals?stage=${stage}` : '/deals'),
+  getByLead: (leadId) => api.get(`/deals/lead/${leadId}`),
   create: (data) => api.post('/deals', data),
   update: (id, data) => api.put(`/deals/${id}`, data),
   updateStage: (id, stage) => api.patch(`/deals/${id}/stage`, { stage }),
   delete: (id) => api.delete(`/deals/${id}`),
+};
+
+export const accountsApi = {
+  getByLead: (leadId) => api.get(`/accounts/lead/${leadId}`),
+  create: (data) => api.post('/accounts', data),
+};
+
+export const contactsApi = {
+  getByLead: (leadId) => api.get(`/contacts/lead/${leadId}`),
+  create: (data) => api.post('/contacts', data),
 };
 
 export const clientsApi = {
@@ -161,6 +172,7 @@ export const usersApi = {
 
 export const activitiesApi = {
   getForEntity: (entityType, entityId) => api.get(`/activities/${entityType}/${entityId}`),
+  create: (data) => api.post('/activities', data),
 };
 
 export const notificationsApi = {

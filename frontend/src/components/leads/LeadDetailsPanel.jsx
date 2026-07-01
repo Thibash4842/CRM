@@ -1,5 +1,7 @@
 import { Mail, Phone, MapPin, Building2, Globe, Calendar, Clock, Edit, MoreHorizontal, Video, MessageCircle, Briefcase, Activity, FileText, CheckSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import CallModal from '../activities/CallModal';
+import TaskModal from '../activities/TaskModal';
 import { useNavigate } from 'react-router-dom';
 import Drawer from '../ui/Drawer';
 import ContactTimeline from '../contacts/ContactTimeline';
@@ -26,6 +28,7 @@ const TABS = [
   { id: 'notes', label: 'Notes', icon: FileText },
   { id: 'followups', label: 'Follow-ups', icon: CheckSquare },
   { id: 'timeline', label: 'Timeline', icon: Clock },
+  { id: 'related', label: 'Related Records', icon: Briefcase },
 ];
 
 const MOCK_CALLS = [
@@ -44,6 +47,7 @@ const MOCK_TASKS = [
 
 export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onConvert, initialTab = 'overview' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,55 +63,71 @@ export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onCo
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Lead Details" size="xl" noPadding hideHeader={true}>
-      <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-slate-700/50 shrink-0 absolute top-0 left-0 right-0 z-10 pointer-events-none">
+      <div className="flex items-center justify-between p-6 dark:border-slate-700/50 shrink-0 absolute top-0 left-0 right-0 z-30 pointer-events-none">
         <h3 className="text-lg font-semibold pointer-events-auto opacity-0">Lead Details</h3>
-        <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 pointer-events-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+        <button onClick={onClose} className="p-2 pt-4 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 pointer-events-auto backdrop-blur-sm transition-all cursor-pointer">
           <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
       <div className="flex flex-col h-full bg-white dark:bg-slate-950 overflow-hidden">
         {/* ═══ Header Section ═══ */}
-        <div className="flex-shrink-0 border-b border-slate-200/80 dark:border-slate-800/80">
-          {/* Profile Header */}
-          <div className="px-6 pt-5 pb-4">
-            <div className="flex items-start gap-5 pr-12">
+        <div className="flex-shrink-0 relative z-20">
+          {/* Subtle Background Accent */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-t-xl z-0">
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 to-white dark:from-slate-900/50 dark:to-slate-950" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          </div>
+
+          <div className="relative z-10 px-8 pt-8 pb-5 dark:border-slate-800/60">
+            <div className="flex items-start gap-6 pr-12">
               {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${avatarColor} text-white flex items-center justify-center text-2xl font-bold shadow-lg`}>
+              <div className="relative flex-shrink-0 mt-1">
+                <div className={`w-[72px] h-[72px] rounded-2xl bg-gradient-to-br ${avatarColor} text-white flex items-center justify-center text-3xl font-bold shadow-lg shadow-indigo-500/20 ring-4 ring-white dark:ring-slate-950 z-10 relative`}>
                   {fullName[0]?.toUpperCase() || '?'}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-[3px] border-white dark:border-slate-950 rounded-full" />
+                <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-emerald-500 border-[3px] border-white dark:border-slate-950 rounded-full z-20 shadow-sm" />
               </div>
 
               {/* Name + Meta */}
-              <div className="flex-1 min-w-0 pt-0.5">
-                <div className="flex items-center gap-2.5 mb-1">
-                  <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate">{fullName}</h1>
-                  <span className={`flex-shrink-0 inline-flex items-center h-5 px-2 rounded-md text-[11px] font-semibold ${lead.status === 'WON' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
-                      lead.status === 'LOST' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' :
-                        'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400'
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">{fullName}</h1>
+                  <span className={`flex-shrink-0 inline-flex items-center h-5 px-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${lead.status === 'WON' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' :
+                    lead.status === 'LOST' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30' :
+                      'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30'
                     }`}>
                     {lead.status || 'NEW'}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+
+                {/* Meta details row */}
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 text-[13px] text-slate-500 font-medium">
                   <span className="flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5" />
-                    {lead.jobTitle || 'Lead'} at <span className="font-medium text-slate-700 dark:text-slate-300">{lead.company || 'Unknown Company'}</span>
+                    <Building2 className="w-4 h-4 text-slate-400" />
+                    {lead.jobTitle || 'Lead'} at <span className="font-semibold text-slate-800 dark:text-slate-200">{lead.company || 'Unknown Company'}</span>
                   </span>
+
                   {lead.email && (
                     <span className="flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5" />
+                      <Mail className="w-4 h-4 text-slate-400" />
                       {lead.email}
                     </span>
                   )}
+
+                  {lead.phone && (
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="w-4 h-4 text-slate-400" />
+                      {lead.phone}
+                    </span>
+                  )}
+
                   {/* Owner badge */}
-                  <span className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-[9px] font-bold text-indigo-700 dark:text-indigo-300">
+                  <span className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                    <div className="w-5 h-5 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700">
                       {(lead.owner || 'U').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                     </div>
-                    <span className="text-slate-600 dark:text-slate-400">Assigned to: <span className="font-medium text-slate-700 dark:text-slate-200">{lead.owner || 'Unassigned'}</span></span>
+                    <span className="text-slate-500 dark:text-slate-400">Owner: <span className="font-semibold text-slate-700 dark:text-slate-300">{lead.owner || 'Unassigned'}</span></span>
                   </span>
                 </div>
               </div>
@@ -117,9 +137,22 @@ export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onCo
                 <button onClick={() => navigate(`/leads/edit/${lead.id}`)} className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
                   <Edit className="w-3.5 h-3.5" /> Edit Lead
                 </button>
-                <button className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+                <div className="relative">
+                  <button onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)} className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                  {isMoreMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-20">
+                      <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => { setIsMoreMenuOpen(false); alert('Duplicate Lead clicked'); }}>Duplicate Lead</button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => { setIsMoreMenuOpen(false); alert('Assign Owner clicked'); }}>Assign Owner</button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => { setIsMoreMenuOpen(false); alert('Copy Link clicked'); }}>Copy Link</button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => { setIsMoreMenuOpen(false); alert('Export clicked'); }}>Export</button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => { setIsMoreMenuOpen(false); alert('Archive clicked'); }}>Archive</button>
+                      <div className="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+                      <button className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium" onClick={() => { setIsMoreMenuOpen(false); if (window.confirm('Are you sure you want to delete this lead?')) { alert('Lead deleted'); onClose(); } }}>Delete Lead</button>
+                    </div>
+                  )}
+                </div>
                 {lead.status !== 'WON' && (
                   <button onClick={() => { onConvert(lead); onClose(); }} className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm shadow-indigo-500/20 transition-all">
                     <Activity className="w-3.5 h-3.5" /> Convert Lead
@@ -130,17 +163,29 @@ export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onCo
           </div>
 
           {/* Quick Action Buttons */}
-          <div className="px-6 pb-4">
+          <div className="px-6 pb-4 relative z-1">
             <div className="grid grid-cols-4 gap-2">
               {[
-                { icon: Phone, label: 'Call', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30' },
-                { icon: Mail, label: 'Email', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30' },
-                { icon: Video, label: 'Schedule Meeting', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30' },
-                { icon: MessageCircle, label: 'WhatsApp', color: 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30' },
+                {
+                  icon: Phone, label: 'Call', color: 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 ring-1 ring-inset ring-emerald-200 dark:ring-emerald-800',
+                  action: () => lead.phone ? window.open(`tel:${lead.phone}`, '_self') : alert('No phone number available for this lead.')
+                },
+                {
+                  icon: Mail, label: 'Email', color: 'text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 ring-1 ring-inset ring-blue-200 dark:ring-blue-800',
+                  action: () => lead.email ? window.open(`mailto:${lead.email}`, '_self') : alert('No email available for this lead.')
+                },
+                {
+                  icon: Video, label: 'Schedule Meeting', color: 'text-purple-700 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 ring-1 ring-inset ring-purple-200 dark:ring-purple-800',
+                  action: () => navigate('/calendar')
+                },
+                {
+                  icon: MessageCircle, label: 'WhatsApp', color: 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 ring-1 ring-inset ring-green-200 dark:ring-green-800',
+                  action: () => lead.phone ? window.open(`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`, '_blank') : alert('No phone number available for this lead.')
+                },
               ].map(action => {
                 const Icon = action.icon;
                 return (
-                  <button key={action.label} className={`flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium transition-all ${action.color}`}>
+                  <button key={action.label} onClick={action.action} className={`flex items-center justify-center gap-2 h-10 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${action.color}`}>
                     <Icon className="w-4 h-4" />
                     {action.label}
                   </button>
@@ -150,23 +195,21 @@ export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onCo
           </div>
 
           {/* Tabs */}
-          <div className="px-6 flex gap-1 overflow-x-auto scrollbar-hide">
+          <div className="px-6 flex gap-2 overflow-x-auto scrollbar-hide py-2">
             {TABS.map(tab => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-3 pb-3 pt-1 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
-                      ? 'text-indigo-600 dark:text-indigo-400'
-                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  className={`relative flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-bold whitespace-nowrap transition-all duration-200 rounded-full ${isActive
+                    ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800/50'
                     }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-indigo-400 dark:text-indigo-600' : ''}`} />
                   {tab.label}
-                  {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-indigo-600 dark:bg-indigo-400 rounded-t" />
-                  )}
                 </button>
               );
             })}
@@ -177,71 +220,47 @@ export default function LeadDetailsPanel({ isOpen, onClose, lead, onUpdate, onCo
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             {activeTab === 'overview' && <OverviewTab lead={lead} fullName={fullName} />}
-            {activeTab === 'activities' && <ActivitiesTab />}
-            {activeTab === 'notes' && <NotesTab />}
-            {activeTab === 'followups' && <TasksTab />}
-            {activeTab === 'timeline' && <ContactTimeline />}
+            {activeTab === 'activities' && <ActivitiesTab leadId={lead.id} />}
+            {activeTab === 'notes' && <NotesTab leadId={lead.id} />}
+            {activeTab === 'followups' && <TasksTab leadId={lead.id} />}
+            {activeTab === 'timeline' && <ContactTimeline leadId={lead.id} />}
+            {activeTab === 'related' && <RelatedTab leadId={lead.id} />}
           </div>
         </div>
       </div>
-    </Drawer>
+    </Drawer >
   );
 }
 
 function OverviewTab({ lead, fullName }) {
   return (
     <div className="space-y-5">
-      {/* AI Smart Summary */}
-      <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-indigo-950/40 border border-indigo-100 dark:border-indigo-800/40 p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="flex items-center justify-center w-6 h-6 rounded-md bg-indigo-600 text-white text-xs">✨</span>
-          <h3 className="text-sm font-semibold text-indigo-900 dark:text-indigo-300">AI Smart Summary</h3>
-        </div>
-        <p className="text-sm text-indigo-900/70 dark:text-indigo-300/80 leading-relaxed mb-4">
-          {fullName || 'This lead'} has shown interest in our pricing and core features. <strong className="font-semibold text-indigo-900 dark:text-indigo-200">High buying intent detected.</strong> Recommend scheduling a product demo soon.
-        </p>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/70 dark:bg-slate-900/60 rounded-lg p-3 backdrop-blur-sm flex flex-col justify-center">
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide mb-1">Priority</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold text-emerald-600 capitalize">{lead.priority ? lead.priority.toLowerCase() : 'cold'}</span>
-            </div>
-          </div>
-          <div className="bg-white/70 dark:bg-slate-900/60 rounded-lg p-3 backdrop-blur-sm">
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide mb-1">Health Score</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-blue-600">A+</span>
-              <span className="text-xs text-blue-500 font-medium">Excellent</span>
-            </div>
-          </div>
-          <div className="bg-white/70 dark:bg-slate-900/60 rounded-lg p-3 backdrop-blur-sm flex flex-col justify-center">
-            <button className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm transition-colors">
-              Call Today
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Info Cards Grid */}
-      <div className="grid grid-cols-2 gap-5">
-        {/* Personal Information */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Contact Information</h3>
+      <div className="grid grid-cols-2 gap-6">
+        {/* Contact Information */}
+        <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80">
+            <h3 className="text-[13px] font-bold tracking-wide text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="w-1 h-3.5 bg-indigo-500 rounded-full"></span>
+              Contact Information
+            </h3>
           </div>
-          <div className="p-4 space-y-3.5">
-            <InfoRow icon={Mail} label="Email" value={lead.email} />
+          <div className="p-5 space-y-4">
+            <InfoRow icon={Mail} label="Email" value={lead.email} isLink />
             <InfoRow icon={Phone} label="Phone" value={lead.phone} />
             <InfoRow icon={MapPin} label="Location" value={[lead.city, lead.state, lead.country].filter(Boolean).join(', ')} />
           </div>
         </div>
 
         {/* Company Information */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Company Information</h3>
+        <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80">
+            <h3 className="text-[13px] font-bold tracking-wide text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="w-1 h-3.5 bg-emerald-500 rounded-full"></span>
+              Company Information
+            </h3>
           </div>
-          <div className="p-4 space-y-3.5">
+          <div className="p-5 space-y-4">
             <InfoRow icon={Building2} label="Company" value={lead.company} />
             <InfoRow icon={Globe} label="Website" value={lead.website} isLink />
             <InfoRow icon={Briefcase} label="Industry" value={lead.industry} />
@@ -249,28 +268,47 @@ function OverviewTab({ lead, fullName }) {
         </div>
 
         {/* Social Information */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Social Profiles</h3>
+        <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80">
+            <h3 className="text-[13px] font-bold tracking-wide text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="w-1 h-3.5 bg-blue-500 rounded-full"></span>
+              Social Profiles
+            </h3>
           </div>
-          <div className="p-4 space-y-3.5">
+          <div className="p-5 space-y-4">
             <InfoRow icon={Globe} label="LinkedIn" value="linkedin.com/in/lead" isLink />
             <InfoRow icon={Globe} label="Twitter" value="@lead" />
             <InfoRow icon={Globe} label="Website" value={lead.website} isLink />
           </div>
         </div>
 
-        {/* Customer Metrics */}
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Customer Metrics</h3>
+        {/* Lead Details */}
+        <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80">
+            <h3 className="text-[13px] font-bold tracking-wide text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="w-1 h-3.5 bg-rose-500 rounded-full"></span>
+              Lead Details
+            </h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-3 gap-4">
-              <MetricCard label="Engagement" value="84" suffix="%" color="text-blue-600" />
-              <MetricCard label="Lifetime Value" value="$48K" color="text-purple-600" />
-              <MetricCard label="Open Deals" value="$60K" color="text-indigo-600" />
-            </div>
+          <div className="p-5 space-y-4">
+            <InfoRow icon={Activity} label="Status" value={lead.status} />
+            <InfoRow icon={Globe} label="Source" value={lead.source} />
+            <InfoRow icon={Calendar} label="Created" value={new Date(lead.createdAt).toLocaleDateString()} />
+          </div>
+        </div>
+
+        {/* Custom Fields */}
+        <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden transition-shadow hover:shadow-md hover:shadow-slate-200/50">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/80">
+            <h3 className="text-[13px] font-bold tracking-wide text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span className="w-1 h-3.5 bg-amber-500 rounded-full"></span>
+              Custom Fields
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <InfoRow icon={FileText} label="Industry Segment" value="Enterprise" />
+            <InfoRow icon={MapPin} label="Territory" value="North America" />
+            <InfoRow icon={Briefcase} label="Lead Score" value="85 / 100" />
           </div>
         </div>
       </div>
@@ -290,104 +328,223 @@ function OverviewTab({ lead, fullName }) {
   );
 }
 
-function ActivitiesTab() {
+function ActivitiesTab({ leadId }) {
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    import('../../services/api').then(({ activitiesApi }) => {
+      activitiesApi.getForEntity('LEAD', leadId).then(data => {
+        setActivities(data || []);
+        setLoading(false);
+      });
+    });
+  }, [leadId]);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Recent Activities</h3>
-        <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors">
+        <button onClick={() => setIsCallModalOpen(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors">
           <Phone className="w-3.5 h-3.5" /> Log Call
         </button>
       </div>
-      {MOCK_CALLS.map(call => (
-        <div key={call.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${call.type === 'outbound' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20'
-                }`}>
-                <Phone className={`w-4 h-4 ${call.type === 'outbound' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
-              </div>
-              <div>
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200 capitalize">{call.type} Call</span>
-                <span className="text-xs text-slate-400 ml-2">· {call.duration}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center h-5 px-2 rounded text-[10px] font-semibold ${call.outcome === 'Interested' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : call.outcome === 'Positive' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    : 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                }`}>{call.outcome}</span>
-              <span className="text-xs text-slate-400">{call.time}</span>
-            </div>
-          </div>
-          <p className="text-sm text-slate-500 leading-relaxed">{call.notes}</p>
+      {isCallModalOpen && (
+        <CallModal
+          isOpen={isCallModalOpen}
+          onClose={() => setIsCallModalOpen(false)}
+          onSave={async (data) => {
+            try {
+              const { activitiesApi } = await import('../../services/api');
+              const newAct = await activitiesApi.create({ ...data, relatedEntity: 'LEAD', relatedId: leadId });
+              setActivities(prev => [newAct, ...prev]);
+              setIsCallModalOpen(false);
+            } catch (e) { alert("Failed to log call"); }
+          }}
+        />
+      )}
+      {loading ? (
+        <div className="animate-pulse space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full border border-slate-200/50 dark:border-slate-800"></div>
+          ))}
         </div>
-      ))}
+      ) : activities.length === 0 ? (
+        <p className="text-sm text-slate-500">No recent activities found.</p>
+      ) : (
+        activities.map(act => (
+          <div key={act.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200 capitalize">{act.type.replace('_', ' ').toLowerCase()}</span>
+                  <span className="text-xs text-slate-400 ml-2">· {act.createdBy?.name || 'System'}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">{new Date(act.createdAt).toLocaleString()}</span>
+              </div>
+            </div>
+            <p className="text-sm text-slate-500 leading-relaxed">{act.description}</p>
+            {act.details && <p className="text-xs text-slate-400 mt-2 p-2 bg-slate-50 dark:bg-slate-900 rounded">{act.details}</p>}
+          </div>
+        ))
+      )}
     </div>
   );
 }
 
-function NotesTab() {
+function NotesTab({ leadId }) {
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [NoteModal, setNoteModal] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    import('../../services/notesService').then(({ notesService }) => {
+      notesService.getAll().then(data => {
+        setNotes(data || []);
+        setLoading(false);
+      });
+    });
+    // Dynamically import NoteModal
+    import('../notes/NoteModal').then(m => setNoteModal(() => m.default));
+  }, []);
+
+  const handleSaveNote = async (noteData) => {
+    try {
+      const { notesService } = await import('../../services/notesService');
+      const newNote = await notesService.create({ ...noteData, linkedRecords: [{ id: leadId, type: 'Lead' }] });
+      setNotes(prev => [newNote, ...prev]);
+      setIsNoteModalOpen(false);
+    } catch (err) {
+      alert('Failed to save note');
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Notes</h3>
-        <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors">
+        <button onClick={() => setIsNoteModalOpen(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors">
           <FileText className="w-3.5 h-3.5" /> Add Note
         </button>
       </div>
-      {MOCK_NOTES.map(note => (
-        <div key={note.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-2">{note.content}</p>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="font-medium">{note.author}</span>
-            <span>·</span>
-            <span>{note.time}</span>
-          </div>
+      {loading ? (
+        <div className="animate-pulse space-y-4">
+          {[1, 2].map(i => (
+            <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-full border border-slate-200/50 dark:border-slate-800"></div>
+          ))}
         </div>
-      ))}
+      ) : notes.length === 0 ? (
+        <p className="text-sm text-slate-500">No notes found.</p>
+      ) : (
+        notes.map(note => (
+          <div key={note.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-2">{note.content}</p>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="font-medium">{note.owner?.name || 'Unknown'}</span>
+              <span>·</span>
+              <span>{new Date(note.createdAt).toLocaleString()}</span>
+            </div>
+          </div>
+        ))
+      )}
+      {NoteModal && (
+        <NoteModal
+          isOpen={isNoteModalOpen}
+          onClose={() => setIsNoteModalOpen(false)}
+          onSave={handleSaveNote}
+        />
+      )}
     </div>
   );
 }
 
-function TasksTab() {
+function TasksTab({ leadId }) {
+  const [tasks, setTasks] = useState([]);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
+  useEffect(() => {
+    import('../../services/api').then(({ tasksApi }) => {
+      // Temporary workaround: fetch all and filter since tasksApi doesn't yet support relatedEntity filtering
+      tasksApi.getAll().then(data => {
+        const leadTasks = (data || []).filter(t => t.relatedEntityType === 'LEAD' && t.relatedEntityId === leadId);
+        setTasks(leadTasks);
+      });
+    });
+  }, [leadId]);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Follow-ups</h3>
-        <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors">
+        <button onClick={() => setIsTaskModalOpen(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors">
           <CheckSquare className="w-3.5 h-3.5" /> Add Follow-up
         </button>
       </div>
-      {MOCK_TASKS.map(task => (
-        <div key={task.id} className={`p-4 rounded-xl border bg-white dark:bg-slate-950 flex items-start gap-3 ${task.done ? 'border-slate-100 dark:border-slate-800/50 opacity-60' : 'border-slate-200 dark:border-slate-800'}`}>
-          <button className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${task.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600 hover:border-indigo-400'
+      {isTaskModalOpen && (
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          onSave={async (data) => {
+            try {
+              const { tasksApi } = await import('../../services/api');
+              const newTask = await tasksApi.create({ ...data, relatedEntityType: 'LEAD', relatedEntityId: leadId });
+              setTasks(prev => [newTask, ...prev]);
+              setIsTaskModalOpen(false);
+            } catch (e) { alert("Failed to add follow-up"); }
+          }}
+        />
+      )}
+      {tasks.map(task => (
+        <div key={task.id} className={`p-4 rounded-xl border bg-white dark:bg-slate-950 flex items-start gap-3 ${task.status === 'COMPLETED' ? 'border-slate-100 dark:border-slate-800/50 opacity-60' : 'border-slate-200 dark:border-slate-800'}`}>
+          <button onClick={async () => {
+            const newStatus = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+            try {
+              const { tasksApi } = await import('../../services/api');
+              await tasksApi.update(task.id, { ...task, status: newStatus });
+              setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+            } catch (e) { alert("Failed to update follow-up"); }
+          }} className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${task.status === 'COMPLETED' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600 hover:border-indigo-400'
             }`}>
-            {task.done && <CheckSquare className="w-3 h-3" />}
+            {task.status === 'COMPLETED' && <CheckSquare className="w-3 h-3" />}
           </button>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium ${task.done ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>{task.title}</p>
+            <p className={`text-sm font-medium ${task.status === 'COMPLETED' ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>{task.title}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-slate-400">Due: {task.due}</span>
-              <span className={`inline-flex items-center h-4 px-1.5 rounded text-[10px] font-semibold ${task.priority === 'high' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                  : task.priority === 'medium' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+              <span className="text-xs text-slate-400">Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+              <span className={`inline-flex items-center h-4 px-1.5 rounded text-[10px] font-semibold ${task.priority === 'HIGH' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                : task.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                 }`}>{task.priority}</span>
             </div>
           </div>
         </div>
       ))}
+      {tasks.length === 0 && (
+        <p className="text-sm text-slate-500">No follow-ups found.</p>
+      )}
     </div>
   );
 }
 
 function InfoRow({ icon: Icon, label, value, isLink }) {
   return (
-    <div className="flex items-start gap-3">
-      <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-      <div className="min-w-0">
-        <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{label}</p>
-        <p className={`text-sm font-medium mt-0.5 truncate ${isLink && value ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-800 dark:text-slate-200'}`}>
+    <div className="flex items-start gap-3.5 group">
+      <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 group-hover:border-indigo-100 dark:group-hover:border-indigo-800/50">
+        <Icon className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+      </div>
+      <div className="min-w-0 py-0.5">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+        <p className={`text-[13px] font-semibold truncate ${isLink && value ? 'text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer' : 'text-slate-800 dark:text-slate-200'}`}>
           {value || '—'}
         </p>
       </div>
@@ -402,6 +559,87 @@ function MetricCard({ label, value, suffix, color }) {
       <div className="flex items-baseline gap-1">
         <span className={`text-xl font-bold ${color}`}>{value}</span>
         {suffix && <span className="text-xs text-slate-400">{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
+function RelatedTab({ leadId }) {
+  const [deals, setDeals] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        const { dealsApi, contactsApi, accountsApi } = await import('../../services/api');
+        const [fetchedDeals, fetchedContacts, fetchedAccounts] = await Promise.all([
+          dealsApi.getByLead(leadId).catch(() => []),
+          contactsApi.getByLead(leadId).catch(() => []),
+          accountsApi.getByLead(leadId).catch(() => [])
+        ]);
+        setDeals(fetchedDeals || []);
+        setContacts(fetchedContacts || []);
+        setAccounts(fetchedAccounts || []);
+      } catch (err) {
+        console.error("Failed to load related records", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (leadId) fetchData();
+  }, [leadId]);
+
+  if (isLoading) return <div className="text-sm text-slate-500 p-4">Loading related records...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Deals ({deals.length})</h3>
+        {deals.length === 0 ? (
+          <p className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">No deals associated with this lead yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {deals.map(deal => (
+              <div key={deal.id} className="p-3 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{deal.title}</span>
+                <span className="text-sm text-slate-500">${deal.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Contacts ({contacts.length})</h3>
+        {contacts.length === 0 ? (
+          <p className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">No contacts associated with this lead yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {contacts.map(contact => (
+              <div key={contact.id} className="p-3 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{contact.fullName}</span>
+                <span className="text-sm text-slate-500">{contact.email}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Accounts ({accounts.length})</h3>
+        {accounts.length === 0 ? (
+          <p className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">No accounts associated with this lead yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {accounts.map(account => (
+              <div key={account.id} className="p-3 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{account.name}</span>
+                <span className="text-sm text-slate-500">{account.industry}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
