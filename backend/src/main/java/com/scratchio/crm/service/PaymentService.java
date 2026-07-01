@@ -6,6 +6,7 @@ import com.scratchio.crm.entity.Payment;
 import com.scratchio.crm.entity.User;
 import com.scratchio.crm.entity.enums.ActivityType;
 import com.scratchio.crm.entity.enums.InvoiceStatus;
+import com.scratchio.crm.entity.enums.PaymentStatus;
 import com.scratchio.crm.exception.BadRequestException;
 import com.scratchio.crm.exception.ResourceNotFoundException;
 import com.scratchio.crm.repository.InvoiceRepository;
@@ -30,6 +31,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final ActivityService activityService;
+    private final AuditLogService auditLogService;
     private final CustomUserDetailsService userDetailsService;
 
     public List<PaymentResponse> getAll() {
@@ -63,10 +65,12 @@ public class PaymentService {
         }
 
         Payment payment = Payment.builder()
+                .paymentNumber(generatePaymentNumber())
                 .invoice(invoice)
                 .amount(amount)
                 .paymentDate(LocalDate.parse((String) data.get("paymentDate")))
                 .paymentMethod((String) data.get("paymentMethod"))
+                .status(PaymentStatus.valueOf(data.getOrDefault("status", "COMPLETED").toString()))
                 .reference((String) data.get("reference"))
                 .notes((String) data.get("notes"))
                 .createdBy(currentUser)
@@ -82,7 +86,12 @@ public class PaymentService {
 
         activityService.log("PAYMENT", payment.getId(), ActivityType.PAYMENT_RECEIVED,
                 "Payment received", "$" + amount + " for " + invoice.getInvoiceNumber());
+        auditLogService.log("Recorded Payment", "Payments", "Payment of $" + amount + " recorded for " + invoice.getInvoiceNumber(), currentUser);
 
         return PaymentResponse.from(payment);
+    }
+
+    private String generatePaymentNumber() {
+        return "PAY-" + System.currentTimeMillis();
     }
 }

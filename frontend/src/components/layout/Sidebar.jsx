@@ -63,11 +63,11 @@ const menuItems = [
       { path: '/milestones', icon: Flag, label: 'Milestones' },
     ],
   },
+  { path: '/quotes', icon: FileText, label: 'Quotes' },
   {
     label: 'Finance',
     icon: DollarSign,
     children: [
-      { path: '/quotes', icon: FileText, label: 'Quotes' },
       { path: '/invoices', icon: FileText, label: 'Invoices' },
       { path: '/payments', icon: CreditCard, label: 'Payments' },
       { path: '/expenses', icon: TrendingDown, label: 'Expenses' },

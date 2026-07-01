@@ -156,6 +156,26 @@ export const paymentsApi = {
   record: (data) => api.post('/payments', data),
 };
 
+export const quotesApi = {
+  getAll: (status) => api.get(status ? `/quotes?status=${status}` : '/quotes'),
+  getById: (id) => api.get(`/quotes/${id}`),
+  create: (data) => api.post('/quotes', data),
+  updateStatus: (id, status) => api.patch(`/quotes/${id}/status`, { status }),
+  delete: (id) => api.delete(`/quotes/${id}`),
+};
+
+export const expensesApi = {
+  getAll: (status) => api.get(status ? `/expenses?status=${status}` : '/expenses'),
+  getById: (id) => api.get(`/expenses/${id}`),
+  create: (data) => api.post('/expenses', data),
+  updateStatus: (id, status) => api.patch(`/expenses/${id}/status`, { status }),
+  delete: (id) => api.delete(`/expenses/${id}`),
+};
+
+export const auditLogsApi = {
+  getAll: () => api.get('/audit-logs'),
+};
+
 export const reportsApi = {
   revenue: () => api.get('/reports/revenue'),
   sales: () => api.get('/reports/sales'),

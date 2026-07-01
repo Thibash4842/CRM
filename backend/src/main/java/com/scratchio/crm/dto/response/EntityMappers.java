@@ -295,7 +295,7 @@ public class EntityMappers {
         private InvoiceStatus status;
         private String notes;
         private BigDecimal paidAmount;
-        private BigDecimal outstandingAmount;
+        private BigDecimal balanceDue; // Mapped to outstandingAmount
         private LocalDateTime createdAt;
 
         public static InvoiceResponse from(Invoice i, BigDecimal paid) {
@@ -307,7 +307,7 @@ public class EntityMappers {
                     .projectId(i.getProject() != null ? i.getProject().getId() : null)
                     .amount(i.getAmount()).taxAmount(i.getTaxAmount()).totalAmount(i.getTotalAmount())
                     .dueDate(i.getDueDate()).status(i.getStatus()).notes(i.getNotes())
-                    .paidAmount(paidAmt).outstandingAmount(i.getTotalAmount().subtract(paidAmt))
+                    .paidAmount(paidAmt).balanceDue(i.getTotalAmount().subtract(paidAmt))
                     .createdAt(i.getCreatedAt()).build();
         }
     }
@@ -315,11 +315,14 @@ public class EntityMappers {
     @Data @Builder
     public static class PaymentResponse {
         private Long id;
+        private String paymentNumber;
         private Long invoiceId;
         private String invoiceNumber;
+        private String clientName;
         private BigDecimal amount;
         private LocalDate paymentDate;
         private String paymentMethod;
+        private PaymentStatus status;
         private String reference;
         private String notes;
         private LocalDateTime createdAt;
@@ -327,10 +330,13 @@ public class EntityMappers {
         public static PaymentResponse from(Payment p) {
             if (p == null) return null;
             return PaymentResponse.builder()
-                    .id(p.getId()).invoiceId(p.getInvoice().getId())
+                    .id(p.getId()).paymentNumber(p.getPaymentNumber())
+                    .invoiceId(p.getInvoice().getId())
                     .invoiceNumber(p.getInvoice().getInvoiceNumber())
+                    .clientName(p.getInvoice().getClient().getCompanyName())
                     .amount(p.getAmount()).paymentDate(p.getPaymentDate())
-                    .paymentMethod(p.getPaymentMethod()).reference(p.getReference())
+                    .paymentMethod(p.getPaymentMethod()).status(p.getStatus())
+                    .reference(p.getReference())
                     .notes(p.getNotes()).createdAt(p.getCreatedAt()).build();
         }
     }
@@ -429,6 +435,79 @@ public class EntityMappers {
                     .dealId(e.getDeal() != null ? e.getDeal().getId() : null)
                     .dealTitle(e.getDeal() != null ? e.getDeal().getTitle() : null)
                     .createdAt(e.getCreatedAt()).updatedAt(e.getUpdatedAt())
+                    .build();
+        }
+    }
+
+    @Data @Builder
+    public static class QuoteResponse {
+        private Long id;
+        private String quoteNumber;
+        private Long clientId;
+        private String clientName;
+        private Long ownerId;
+        private String ownerName;
+        private BigDecimal amount;
+        private LocalDate issueDate;
+        private LocalDate expiryDate;
+        private QuoteStatus status;
+        private String notes;
+        private LocalDateTime createdAt;
+
+        public static QuoteResponse from(Quote q) {
+            if (q == null) return null;
+            return QuoteResponse.builder()
+                    .id(q.getId()).quoteNumber(q.getQuoteNumber())
+                    .clientId(q.getClient().getId()).clientName(q.getClient().getCompanyName())
+                    .ownerId(q.getOwner().getId()).ownerName(q.getOwner().getFullName())
+                    .amount(q.getAmount()).issueDate(q.getIssueDate())
+                    .expiryDate(q.getExpiryDate()).status(q.getStatus())
+                    .notes(q.getNotes()).createdAt(q.getCreatedAt()).build();
+        }
+    }
+
+    @Data @Builder
+    public static class ExpenseResponse {
+        private Long id;
+        private String expenseNumber;
+        private Long employeeId;
+        private String employeeName;
+        private String category;
+        private String vendor;
+        private LocalDate date;
+        private BigDecimal amount;
+        private ExpenseStatus status;
+        private String notes;
+        private LocalDateTime createdAt;
+
+        public static ExpenseResponse from(Expense e) {
+            if (e == null) return null;
+            return ExpenseResponse.builder()
+                    .id(e.getId()).expenseNumber(e.getExpenseNumber())
+                    .employeeId(e.getEmployee().getId()).employeeName(e.getEmployee().getFullName())
+                    .category(e.getCategory()).vendor(e.getVendor())
+                    .date(e.getDate()).amount(e.getAmount())
+                    .status(e.getStatus()).notes(e.getNotes())
+                    .createdAt(e.getCreatedAt()).build();
+        }
+    }
+
+    @Data @Builder
+    public static class AuditLogResponse {
+        private Long id;
+        private LocalDateTime timestamp;
+        private String action;
+        private String module;
+        private String details;
+        private String userName;
+
+        public static AuditLogResponse from(AuditLog log) {
+            if (log == null) return null;
+            return AuditLogResponse.builder()
+                    .id(log.getId()).timestamp(log.getTimestamp())
+                    .action(log.getAction()).module(log.getModule())
+                    .details(log.getDetails())
+                    .userName(log.getUser() != null ? log.getUser().getFullName() : "System")
                     .build();
         }
     }

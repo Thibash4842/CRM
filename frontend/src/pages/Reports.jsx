@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { BarChart3, TrendingUp, Users, FolderKanban } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, FolderKanban, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useFinance } from '../context/FinanceContext';
 import { reportsApi } from '../services/api';
 import Card from '../components/ui/Card';
 import { LoadingSpinner } from '../components/ui/PageHeader';
@@ -11,15 +12,28 @@ const reportTabs = [
   { id: 'sales', label: 'Sales', icon: BarChart3 },
   { id: 'leads', label: 'Leads', icon: Users },
   { id: 'projects', label: 'Projects', icon: FolderKanban },
+  { id: 'audit', label: 'Audit Logs', icon: Activity },
 ];
 
 export default function Reports() {
+  const { getRevenueStats, auditLogs } = useFinance();
   const [activeTab, setActiveTab] = useState('revenue');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
+    if (activeTab === 'revenue') {
+      setData(getRevenueStats());
+      setLoading(false);
+      return;
+    }
+    if (activeTab === 'audit') {
+      setData(auditLogs);
+      setLoading(false);
+      return;
+    }
+    
     const fetchers = {
       revenue: reportsApi.revenue,
       sales: reportsApi.sales,
@@ -51,9 +65,11 @@ export default function Reports() {
         <div className="grid gap-6">
           {activeTab === 'revenue' && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Card><p className="text-sm text-slate-500">Total Revenue</p><p className="text-3xl font-bold mt-2">{formatCurrency(data?.totalRevenue)}</p></Card>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <Card><p className="text-sm text-slate-500">Net Revenue</p><p className="text-3xl font-bold mt-2">{formatCurrency(data?.totalRevenue - data?.totalExpenses)}</p></Card>
+                <Card><p className="text-sm text-slate-500">Collected</p><p className="text-3xl font-bold mt-2 text-emerald-500">{formatCurrency(data?.totalRevenue)}</p></Card>
                 <Card><p className="text-sm text-slate-500">Outstanding</p><p className="text-3xl font-bold mt-2 text-amber-500">{formatCurrency(data?.outstanding)}</p></Card>
+                <Card><p className="text-sm text-slate-500">Total Expenses</p><p className="text-3xl font-bold mt-2 text-red-500">{formatCurrency(data?.totalExpenses)}</p></Card>
               </div>
             </>
           )}
@@ -103,6 +119,32 @@ export default function Reports() {
                 ))}
               </Card>
             </div>
+          )}
+          {activeTab === 'audit' && (
+            <Card>
+              <h2 className="text-lg font-bold mb-4">Global Audit Trail</h2>
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                {data?.length === 0 ? (
+                  <p className="text-slate-500 py-8 text-center">No audit logs available yet. Perform actions to see them here.</p>
+                ) : (
+                  data?.map((log) => (
+                    <div key={log.id} className="flex gap-4 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
+                        <Activity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold">{log.action}</span>
+                          <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full">{log.module}</span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{log.details}</p>
+                        <p className="text-xs text-slate-500 mt-2">{new Date(log.timestamp).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
           )}
         </div>
       )}

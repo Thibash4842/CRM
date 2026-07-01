@@ -82,7 +82,7 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isDemoMode, setIsDemoMode] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const handleActivityClick = (activity) => {
     if (activity.entityType === 'LEAD') navigate('/leads');

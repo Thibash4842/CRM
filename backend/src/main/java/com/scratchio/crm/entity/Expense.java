@@ -1,49 +1,51 @@
 package com.scratchio.crm.entity;
 
-import com.scratchio.crm.entity.enums.PaymentStatus;
+import com.scratchio.crm.entity.enums.ExpenseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payments")
+@Table(name = "expenses")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Payment {
+public class Expense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "payment_number", nullable = false, unique = true)
-    private String paymentNumber;
+    @Column(name = "expense_number", nullable = false, unique = true)
+    private String expenseNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id", nullable = false)
-    private Invoice invoice;
+    @JoinColumn(name = "employee_id", nullable = false)
+    private User employee;
+
+    @Column(nullable = false)
+    private String category;
+
+    @Column(nullable = false)
+    private String vendor;
+
+    @Column(name = "expense_date", nullable = false)
+    private LocalDate date;
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "payment_date", nullable = false)
-    private LocalDate paymentDate;
-
-    @Column(name = "payment_method")
-    private String paymentMethod;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private PaymentStatus status = PaymentStatus.COMPLETED;
-
-    private String reference;
+    private ExpenseStatus status = ExpenseStatus.DRAFT;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -55,4 +57,8 @@ public class Payment {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LeadProvider } from './context/LeadContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { FinanceProvider } from './context/FinanceContext';
+import { ToastProvider } from './context/ToastContext';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -17,8 +19,14 @@ import Accounts from './pages/Accounts';
 import Activities from './pages/Activities';
 import Notes from './pages/Notes';
 import Projects from './pages/Projects';
+import Quotes from './pages/Quotes';
+import CreateQuote from './pages/CreateQuote';
 import Invoices from './pages/Invoices';
+import InvoiceDetails from './pages/InvoiceDetails';
 import Payments from './pages/Payments';
+import PaymentDetails from './pages/PaymentDetails';
+import Expenses from './pages/Expenses';
+import ExpenseDetails from './pages/ExpenseDetails';
 import Reports from './pages/Reports';
 import UsersPage from './pages/Users';
 import SettingsPage from './pages/Settings';
@@ -46,11 +54,13 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <WebSocketProvider>
-          <LeadProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <ToastProvider>
+          <WebSocketProvider>
+            <LeadProvider>
+              <FinanceProvider>
+                <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
                 <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
                 <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
 
@@ -69,8 +79,18 @@ export default function App() {
                   <Route path="clients" element={<Clients />} />
                   <Route path="projects" element={<Projects />} />
                   <Route path="calendar" element={<Calendar />} />
+                  <Route path="quotes" element={<Quotes />} />
+                  <Route path="quotes/create" element={<CreateQuote />} />
+                  <Route path="quotes/:id" element={<CreateQuote />} />
                   <Route path="invoices" element={<Invoices />} />
+                  <Route path="invoices/create" element={<InvoiceDetails />} />
+                  <Route path="invoices/:id" element={<InvoiceDetails />} />
                   <Route path="payments" element={<Payments />} />
+                  <Route path="payments/create" element={<PaymentDetails />} />
+                  <Route path="payments/:id" element={<PaymentDetails />} />
+                  <Route path="expenses" element={<Expenses />} />
+                  <Route path="expenses/create" element={<ExpenseDetails />} />
+                  <Route path="expenses/:id" element={<ExpenseDetails />} />
                   <Route path="reports" element={<Reports />} />
                   <Route path="users" element={<UsersPage />} />
                   <Route path="settings" element={<SettingsPage />} />
@@ -78,10 +98,12 @@ export default function App() {
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </BrowserRouter>
-          </LeadProvider>
-        </WebSocketProvider>
+                </Routes>
+                </BrowserRouter>
+              </FinanceProvider>
+            </LeadProvider>
+          </WebSocketProvider>
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );

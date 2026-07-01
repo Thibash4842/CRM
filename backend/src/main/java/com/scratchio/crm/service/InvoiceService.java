@@ -31,6 +31,7 @@ public class InvoiceService {
     private final ClientRepository clientRepository;
     private final ProjectRepository projectRepository;
     private final ActivityService activityService;
+    private final AuditLogService auditLogService;
     private final CustomUserDetailsService userDetailsService;
 
     public List<InvoiceResponse> getAll(InvoiceStatus status) {
@@ -58,6 +59,7 @@ public class InvoiceService {
                 .amount(amount)
                 .taxAmount(tax)
                 .totalAmount(amount.add(tax))
+                .balanceDue(amount.add(tax))
                 .dueDate(LocalDate.parse((String) data.get("dueDate")))
                 .status(InvoiceStatus.DRAFT)
                 .notes((String) data.get("notes"))
@@ -71,6 +73,7 @@ public class InvoiceService {
         invoice = invoiceRepository.save(invoice);
         activityService.log("INVOICE", invoice.getId(), ActivityType.CREATED,
                 "Invoice created", invoice.getInvoiceNumber());
+        auditLogService.log("Generated Invoice", "Invoices", "Invoice " + invoice.getInvoiceNumber() + " generated for " + invoice.getClient().getCompanyName(), currentUser);
         return InvoiceResponse.from(invoice, BigDecimal.ZERO);
     }
 
@@ -79,12 +82,18 @@ public class InvoiceService {
         Invoice invoice = findInvoice(id);
         invoice.setStatus(status);
         invoice = invoiceRepository.save(invoice);
+        
+        User currentUser = userDetailsService.getCurrentUserEntity();
+        auditLogService.log("Updated Invoice", "Invoices", "Invoice ID " + id + " status changed to " + status, currentUser);
         return InvoiceResponse.from(invoice, paymentRepository.sumByInvoiceId(id));
     }
 
     @Transactional
     public void delete(Long id) {
-        invoiceRepository.delete(findInvoice(id));
+        Invoice invoice = findInvoice(id);
+        User currentUser = userDetailsService.getCurrentUserEntity();
+        auditLogService.log("Deleted Invoice", "Invoices", "Invoice " + invoice.getInvoiceNumber() + " deleted", currentUser);
+        invoiceRepository.delete(invoice);
     }
 
     private String generateInvoiceNumber() {

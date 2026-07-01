@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  CreditCard, Search, Plus, 
+  TrendingDown, Search, Plus, 
   RefreshCw, Download, MoreVertical, 
-  RefreshCcw, FileText, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Clock
+  FileText, ChevronLeft, ChevronRight, CheckCircle, Clock, XCircle, DollarSign
 } from 'lucide-react';
 import PageHeader, { FilterSelect, EmptyState } from '../components/ui/PageHeader';
 import Card, { StatCard } from '../components/ui/Card';
@@ -15,10 +15,11 @@ import { useFinance } from '../context/FinanceContext';
 const getStatusBadge = (status) => {
   const normStatus = status ? status.toUpperCase() : '';
   switch (normStatus) {
-    case 'COMPLETED': return { color: 'emerald', label: 'Completed' };
-    case 'PENDING': return { color: 'yellow', label: 'Pending' };
-    case 'REFUNDED': return { color: 'slate', label: 'Refunded' };
-    case 'FAILED': return { color: 'red', label: 'Failed' };
+    case 'DRAFT': return { color: 'slate', label: 'Draft' };
+    case 'PENDING_APPROVAL': return { color: 'yellow', label: 'Pending' };
+    case 'APPROVED': return { color: 'indigo', label: 'Approved' };
+    case 'REIMBURSED': return { color: 'emerald', label: 'Reimbursed' };
+    case 'REJECTED': return { color: 'red', label: 'Rejected' };
     default: return { color: 'slate', label: status || 'Unknown' };
   }
 };
@@ -27,9 +28,9 @@ const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
 };
 
-export default function Payments() {
+export default function Expenses() {
   const navigate = useNavigate();
-  const { payments } = useFinance();
+  const { expenses } = useFinance();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -50,7 +51,7 @@ export default function Payments() {
 
   useEffect(() => {
     loadData();
-  }, [payments]);
+  }, [expenses]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -61,19 +62,19 @@ export default function Payments() {
   };
 
   const filteredAndSorted = useMemo(() => {
-    let result = [...payments];
+    let result = [...expenses];
     if (search) {
       result = result.filter(q => 
-        (q.paymentNumber || '').toLowerCase().includes(search.toLowerCase()) || 
-        (q.clientName || '').toLowerCase().includes(search.toLowerCase()) ||
-        (q.invoiceNumber || '').toLowerCase().includes(search.toLowerCase())
+        (q.expenseNumber || '').toLowerCase().includes(search.toLowerCase()) || 
+        (q.employeeName || '').toLowerCase().includes(search.toLowerCase()) ||
+        (q.vendor || '').toLowerCase().includes(search.toLowerCase())
       );
     }
     if (statusFilter) {
       result = result.filter(q => q.status === statusFilter);
     }
     if (dateFilter) {
-      result = result.filter(q => (q.paymentDate || '').startsWith(dateFilter));
+      result = result.filter(q => (q.date || '').startsWith(dateFilter));
     }
     
     result.sort((a, b) => {
@@ -83,7 +84,7 @@ export default function Payments() {
     });
 
     return result;
-  }, [payments, search, statusFilter, dateFilter, sortConfig]);
+  }, [expenses, search, statusFilter, dateFilter, sortConfig]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -94,12 +95,12 @@ export default function Payments() {
 
   const stats = useMemo(() => {
     return {
-      totalCollected: payments.filter(p => p.status === 'COMPLETED').reduce((sum, p) => sum + (p.amount || 0), 0),
-      pending: payments.filter(p => p.status === 'PENDING').reduce((sum, p) => sum + (p.amount || 0), 0),
-      refunded: payments.filter(p => p.status === 'REFUNDED').reduce((sum, p) => sum + (p.amount || 0), 0),
-      failed: payments.filter(p => p.status === 'FAILED').reduce((sum, p) => sum + (p.amount || 0), 0)
+      total: expenses.reduce((sum, e) => sum + (e.amount || 0), 0),
+      pending: expenses.filter(e => e.status === 'PENDING_APPROVAL').reduce((sum, e) => sum + (e.amount || 0), 0),
+      reimbursed: expenses.filter(e => e.status === 'REIMBURSED').reduce((sum, e) => sum + (e.amount || 0), 0),
+      rejected: expenses.filter(e => e.status === 'REJECTED').reduce((sum, e) => sum + (e.amount || 0), 0)
     };
-  }, [payments]);
+  }, [expenses]);
 
   const handleSelectAll = (e) => {
     if (e.target.checked) setSelectedRows(paginatedData.map(q => q.id));
@@ -115,16 +116,16 @@ export default function Payments() {
       {/* Breadcrumb & Header section */}
       <div>
         <nav className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
-          Finance <span className="mx-2">/</span> <span className="text-slate-900 dark:text-white">Payments</span>
+          Finance <span className="mx-2">/</span> <span className="text-slate-900 dark:text-white">Expenses</span>
         </nav>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Payments</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Expenses</h1>
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Search payments..." 
+                placeholder="Search expenses..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -134,10 +135,11 @@ export default function Payments() {
               value={statusFilter} 
               onChange={setStatusFilter}
               options={[
-                { value: 'COMPLETED', label: 'Completed' },
-                { value: 'PENDING', label: 'Pending' },
-                { value: 'REFUNDED', label: 'Refunded' },
-                { value: 'FAILED', label: 'Failed' }
+                { value: 'DRAFT', label: 'Draft' },
+                { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
+                { value: 'APPROVED', label: 'Approved' },
+                { value: 'REIMBURSED', label: 'Reimbursed' },
+                { value: 'REJECTED', label: 'Rejected' }
               ]}
               label="All Statuses"
             />
@@ -153,8 +155,8 @@ export default function Payments() {
             <Button variant="secondary" title="Export">
               <Download className="w-4 h-4 mr-2" /> Export
             </Button>
-            <Button onClick={() => navigate('/payments/create')}>
-              <Plus className="w-4 h-4 mr-2" /> Record Payment
+            <Button onClick={() => navigate('/expenses/create')}>
+              <Plus className="w-4 h-4 mr-2" /> Record Expense
             </Button>
           </div>
         </div>
@@ -162,10 +164,10 @@ export default function Payments() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Collected" value={formatCurrency(stats.totalCollected)} icon={CheckCircle} color="from-emerald-500 to-teal-600" trend={{ positive: true, value: 8 }} />
-        <StatCard title="Pending Processing" value={formatCurrency(stats.pending)} icon={Clock} color="from-amber-500 to-orange-600" />
-        <StatCard title="Refunded" value={formatCurrency(stats.refunded)} icon={RefreshCcw} color="from-slate-500 to-slate-600" />
-        <StatCard title="Failed Payments" value={formatCurrency(stats.failed)} icon={AlertCircle} color="from-red-500 to-rose-600" />
+        <StatCard title="Total Expenses" value={formatCurrency(stats.total)} icon={TrendingDown} color="from-indigo-500 to-purple-600" trend={{ positive: false, value: 5 }} />
+        <StatCard title="Pending Approval" value={formatCurrency(stats.pending)} icon={Clock} color="from-amber-500 to-orange-600" />
+        <StatCard title="Reimbursed" value={formatCurrency(stats.reimbursed)} icon={CheckCircle} color="from-emerald-500 to-teal-600" trend={{ positive: true, value: 12 }} />
+        <StatCard title="Rejected" value={formatCurrency(stats.rejected)} icon={XCircle} color="from-red-500 to-rose-600" />
       </div>
 
       {/* Table Section */}
@@ -178,10 +180,10 @@ export default function Payments() {
           </div>
         ) : filteredAndSorted.length === 0 ? (
           <EmptyState 
-            icon={CreditCard} 
-            title="No payments found" 
-            description="We couldn't find any payments matching your criteria." 
-            action={<Button onClick={() => navigate('/payments/create')}><Plus className="w-4 h-4 mr-2" /> Record Payment</Button>} 
+            icon={TrendingDown} 
+            title="No expenses found" 
+            description="We couldn't find any expenses matching your criteria." 
+            action={<Button onClick={() => navigate('/expenses/create')}><Plus className="w-4 h-4 mr-2" /> Record Expense</Button>} 
           />
         ) : (
           <div className="overflow-x-auto">
@@ -192,11 +194,11 @@ export default function Payments() {
                     <input type="checkbox" checked={selectedRows.length === paginatedData.length && paginatedData.length > 0} onChange={handleSelectAll} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                   </th>
                   {[
-                    { key: 'paymentNumber', label: 'Payment ID' },
-                    { key: 'clientName', label: 'Customer' },
-                    { key: 'invoiceNumber', label: 'Invoice Ref' },
-                    { key: 'paymentDate', label: 'Date' },
-                    { key: 'paymentMethod', label: 'Method' },
+                    { key: 'expenseNumber', label: 'Expense ID' },
+                    { key: 'employeeName', label: 'Employee' },
+                    { key: 'category', label: 'Category' },
+                    { key: 'vendor', label: 'Vendor' },
+                    { key: 'date', label: 'Date' },
                     { key: 'amount', label: 'Amount' },
                     { key: 'status', label: 'Status' }
                   ].map(col => (
@@ -213,43 +215,50 @@ export default function Payments() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.map((pay) => {
-                  const badge = getStatusBadge(pay.status);
+                {paginatedData.map((exp) => {
+                  const badge = getStatusBadge(exp.status);
                   return (
-                    <tr key={pay.id} className="border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={exp.id} className="border-b dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="p-4">
-                        <input type="checkbox" checked={selectedRows.includes(pay.id)} onChange={() => handleSelectRow(pay.id)} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                        <input type="checkbox" checked={selectedRows.includes(exp.id)} onChange={() => handleSelectRow(exp.id)} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                       </td>
-                      <td className="px-6 py-4 font-medium text-indigo-600 dark:text-indigo-400">{pay.paymentNumber}</td>
-                      <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{pay.clientName}</td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{pay.invoiceNumber}</td>
-                      <td className="px-6 py-4">{pay.paymentDate}</td>
-                      <td className="px-6 py-4">{pay.paymentMethod}</td>
-                      <td className="px-6 py-4 font-bold">{formatCurrency(pay.amount)}</td>
+                      <td className="px-6 py-4 font-medium text-indigo-600 dark:text-indigo-400">{exp.expenseNumber}</td>
+                      <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{exp.employeeName}</td>
+                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{exp.category}</td>
+                      <td className="px-6 py-4">{exp.vendor}</td>
+                      <td className="px-6 py-4">{exp.date}</td>
+                      <td className="px-6 py-4 font-bold">{formatCurrency(exp.amount)}</td>
                       <td className="px-6 py-4">
                         <Badge color={badge.color}>{badge.label}</Badge>
                       </td>
                       <td className="px-6 py-4 text-right relative">
                         <button 
                           className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
-                          onClick={() => setActiveDropdown(activeDropdown === pay.id ? null : pay.id)}
+                          onClick={() => setActiveDropdown(activeDropdown === exp.id ? null : exp.id)}
                         >
                           <MoreVertical className="w-5 h-5" />
                         </button>
                         
-                        {activeDropdown === pay.id && (
+                        {activeDropdown === exp.id && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setActiveDropdown(null)} />
                             <div className="absolute right-6 top-10 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50 animate-fade-in">
-                              <button onClick={() => navigate(`/payments/${pay.id}`)} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
-                                <FileText className="w-4 h-4" /> View Receipt
+                              <button onClick={() => navigate(`/expenses/${exp.id}`)} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                <FileText className="w-4 h-4" /> View / Edit
                               </button>
-                              <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
-                                <Download className="w-4 h-4" /> Download Receipt
-                              </button>
-                              {pay.status === 'COMPLETED' && (
-                                <button onClick={() => navigate(`/payments/${pay.id}`)} className="w-full text-left px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700">
-                                  <RefreshCcw className="w-4 h-4" /> Issue Refund
+                              {exp.status === 'PENDING_APPROVAL' && (
+                                <>
+                                  <button onClick={() => navigate(`/expenses/${exp.id}`)} className="w-full text-left px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700">
+                                    <CheckCircle className="w-4 h-4" /> Quick Approve
+                                  </button>
+                                  <button onClick={() => navigate(`/expenses/${exp.id}`)} className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" /> Reject
+                                  </button>
+                                </>
+                              )}
+                              {exp.status === 'APPROVED' && (
+                                <button onClick={() => navigate(`/expenses/${exp.id}`)} className="w-full text-left px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700">
+                                  <DollarSign className="w-4 h-4" /> Reimburse
                                 </button>
                               )}
                             </div>
@@ -265,7 +274,7 @@ export default function Payments() {
             {/* Pagination */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <span className="text-sm text-slate-500">
-                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSorted.length)} of {filteredAndSorted.length} Payments
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSorted.length)} of {filteredAndSorted.length} Expenses
               </span>
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
