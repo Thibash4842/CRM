@@ -9,7 +9,6 @@ import {
   Phone, Users as UsersIcon, StickyNote, CheckCircle, XCircle, Trash2, MoreVertical, Bell
 } from 'lucide-react';
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 
 const menuItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -21,8 +20,7 @@ const menuItems = [
       {
         label: 'Lead Management',
         icon: Target,
-        path: '/leads',
-        popover: [
+        children: [
           { path: '/leads', icon: Target, label: 'Active Leads' },
           { path: '/leads/converted', icon: CheckCircle, label: 'Converted Leads' },
           { path: '/leads/trash', icon: Trash2, label: 'Lost Leads' },
@@ -123,8 +121,6 @@ const menuItems = [
 export default function Sidebar({ open, onClose }) {
   const location = useLocation();
   const [expanded, setExpanded] = useState([]);
-  const [activePopover, setActivePopover] = useState(null);
-  const [popoverPos, setPopoverPos] = useState({ top: 0, left: 0 });
 
   const toggleExpand = (label) => {
     setExpanded((prev) =>
@@ -195,6 +191,7 @@ export default function Sidebar({ open, onClose }) {
                                       key={grandchild.path}
                                       to={grandchild.path}
                                       onClick={onClose}
+                                      end
                                       className={({ isActive }) =>
                                         `sidebar-link text-xs ${isActive ? 'sidebar-link-active' : 'sidebar-link-inactive'}`
                                       }
@@ -209,63 +206,6 @@ export default function Sidebar({ open, onClose }) {
                           );
                         }
 
-                        // Check if child has a popover
-                        if (child.popover) {
-                          const childHasActiveChild = child.popover.some(p => location.pathname === p.path);
-                          return (
-                            <div key={child.label} className="relative">
-                              <div className={`flex items-center w-full rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${childHasActiveChild ? 'bg-slate-50 dark:bg-slate-800/50 text-blue-600' : 'text-slate-700 dark:text-slate-300'}`}>
-                                <NavLink
-                                  to={child.path}
-                                  onClick={onClose}
-                                  className="flex items-center gap-3 py-2 px-3 flex-1 text-sm font-medium"
-                                >
-                                  <child.icon className="w-4 h-4" />
-                                  <span className="flex-1 text-left">{child.label}</span>
-                                </NavLink>
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (activePopover === child.label) {
-                                      setActivePopover(null);
-                                    } else {
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      setPopoverPos({ top: rect.top, left: rect.right + 8 });
-                                      setActivePopover(child.label);
-                                    }
-                                  }}
-                                  className="p-1.5 mr-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
-                                >
-                                  <MoreVertical className="w-4 h-4" />
-                                </button>
-                              </div>
-
-                              {activePopover === child.label && createPortal(
-                                <>
-                                  <div className="fixed inset-0 z-[60]" onClick={() => setActivePopover(null)} />
-                                  <div
-                                    className="fixed bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1.5 z-[70] animate-fade-in w-56"
-                                    style={{ top: popoverPos.top, left: popoverPos.left }}
-                                  >
-                                    {child.popover.map((popItem) => (
-                                      <NavLink
-                                        key={popItem.path}
-                                        to={popItem.path}
-                                        onClick={() => { setActivePopover(null); onClose(); }}
-                                        className={({ isActive }) => `flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${isActive ? 'text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20' : 'text-slate-700 dark:text-slate-300'}`}
-                                      >
-                                        <popItem.icon className="w-4 h-4" />
-                                        {popItem.label}
-                                      </NavLink>
-                                    ))}
-                                  </div>
-                                </>,
-                                document.body
-                              )}
-                            </div>
-                          );
-                        }
 
                         // Regular child with path
                         return (
@@ -273,6 +213,7 @@ export default function Sidebar({ open, onClose }) {
                             key={child.path}
                             to={child.path}
                             onClick={onClose}
+                            end
                             className={({ isActive }) =>
                               `sidebar-link text-sm ${isActive ? 'sidebar-link-active' : 'sidebar-link-inactive'}`
                             }
